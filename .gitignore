@@ -11,5 +11,9 @@ Thumbs.db
 .knowledge-site/node_modules/
 .knowledge-site/public/
 .knowledge-site/content.generated/
+.knowledge-site/.stage-manifest.json
 .knowledge-site/.quartz/cache/
-
+.knowledge-site/docs/
+.knowledge-site/content/
+.knowledge-site/.github/
+.knowledge-site.partial-*/

@@ -1,0 +1,33 @@
+name: Knowledge Atlas privacy checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        site_mode: [public, private]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .knowledge-site
+    env:
+      SITE_MODE: ${{ matrix.site_mode }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: .knowledge-site/package-lock.json
+      - run: npm ci
+      - run: npm run test:privacy
+      - run: npm run build:site
