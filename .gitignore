@@ -1,0 +1,15 @@
+.obsidian/
+.claude/
+.claudian/
+.trash/
+
+Obsidian.lnk
+.DS_Store
+Thumbs.db
+*.tmp
+
+.knowledge-site/node_modules/
+.knowledge-site/public/
+.knowledge-site/content.generated/
+.knowledge-site/.quartz/cache/
+

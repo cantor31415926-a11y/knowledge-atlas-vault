@@ -1,0 +1,9 @@
+{
+	"nodes":[
+		{"id":"db6e7de97ceddbf6","type":"file","file":"🤖 AI 学习&实操/obsidian learning/obsidian大致用法/02 obsidian usage/obsidian 快捷键.md","x":-180,"y":-80,"width":400,"height":260},
+		{"id":"80104da6bbf3b0e2","type":"file","file":"🤖 AI 学习&实操/obsidian learning/obsidian大致用法/02 obsidian usage/obsidian 设置.md","x":-220,"y":-440,"width":400,"height":280}
+	],
+	"edges":[
+		{"id":"1fdb039bc7394e07","fromNode":"80104da6bbf3b0e2","fromSide":"bottom","toNode":"db6e7de97ceddbf6","toSide":"top","color":"1"}
+	]
+}
