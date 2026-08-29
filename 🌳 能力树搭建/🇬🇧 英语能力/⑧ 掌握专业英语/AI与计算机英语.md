@@ -2,6 +2,7 @@
 title: AI与计算机英语
 date: 2026-08-21
 tags: [能力树, 英语能力]
+publish: true
 ---
 
 # AI与计算机英语
