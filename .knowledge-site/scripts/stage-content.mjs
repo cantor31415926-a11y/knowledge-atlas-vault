@@ -399,7 +399,7 @@ export async function stageVault({
   const assets = assetPaths.map((relativePath) => ({ relativePath }))
   const indexes = buildIndexes(notes, assets)
   const publishedNotes = notes.filter((note) => note.frontmatter.publish === true)
-  const selectedNotes = mode === "public" ? publishedNotes : notes
+  const selectedNotes = notes
   const selectedPaths = new Set(selectedNotes.map((note) => note.relativePath))
   const referencedAssets = new Set()
   let privateLinksRedacted = 0

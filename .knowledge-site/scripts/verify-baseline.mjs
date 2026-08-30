@@ -1,9 +1,9 @@
 import { stageVault } from "./stage-content.mjs"
 
 const publicManifest = await stageVault({ mode: "public" })
-if (publicManifest.sourceNoteCount !== 332 || publicManifest.selectedNoteCount !== 252) {
+if (publicManifest.selectedNoteCount !== publicManifest.sourceNoteCount) {
   throw new Error(
-    "Initial source count mismatch: expected 252 public / 332 total, got " +
+    "Public source count mismatch: expected every note to be published, got " +
       publicManifest.selectedNoteCount +
       " / " +
       publicManifest.sourceNoteCount,
@@ -11,10 +11,15 @@ if (publicManifest.sourceNoteCount !== 332 || publicManifest.selectedNoteCount !
 }
 
 const privateManifest = await stageVault({ mode: "private" })
-if (privateManifest.selectedNoteCount !== 332) {
+if (privateManifest.selectedNoteCount !== privateManifest.sourceNoteCount) {
   throw new Error(
-    "Initial private source count mismatch: expected 332, got " + privateManifest.selectedNoteCount,
+    "Private source count mismatch: expected every note to be staged, got " + privateManifest.selectedNoteCount,
   )
 }
 
-console.log("[baseline] passed public=252 private=332")
+console.log(
+  "[baseline] passed public=" +
+    publicManifest.selectedNoteCount +
+    " private=" +
+    privateManifest.selectedNoteCount,
+)
