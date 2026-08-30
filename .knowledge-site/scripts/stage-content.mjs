@@ -313,7 +313,7 @@ function homepageMarkdown(mode, selectedNotes, linkCount, tags) {
     )
     .join("\n")
 
-  return [
+  const sections = [
     "---",
     "title: 知识星图",
     "description: " + description,
@@ -345,7 +345,13 @@ function homepageMarkdown(mode, selectedNotes, linkCount, tags) {
       ? "这里包含完整 Vault。站点本身设置为不被索引，并将在 Cloudflare Access 登录前拦截所有页面与静态资源。"
       : "公开站只收录 frontmatter 中明确设置 publish: true 的笔记。未公开内容不会进入页面、搜索索引、图谱或部署产物。",
     "",
-  ].join("\n")
+  ]
+
+  if (!isPrivate) {
+    sections[sections.length - 2] = "完整 Obsidian Vault 已公开，包含所有笔记、搜索索引和知识图谱。"
+  }
+
+  return sections.join("\n")
 }
 
 function privateFragment(markdown) {
