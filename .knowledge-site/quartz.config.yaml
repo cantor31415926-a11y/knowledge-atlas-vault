@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=./quartz/plugins/quartz-plugins.schema.json
 configuration:
-  pageTitle: 知识星图
+  pageTitle: 旺哥的第二大脑
   pageTitleSuffix: " · Knowledge Atlas"
   enableSPA: true
   enablePopovers: true
@@ -221,8 +221,7 @@ plugins:
   - source: "@quartz-community/footer"
     enabled: true
     options:
-      links:
-        私人全库: https://wang-knowledge-atlas-private.pages.dev
+      links: {}
     layout:
       position: footer
       priority: 50

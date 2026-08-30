@@ -1,0 +1,957 @@
+html.galaxy-home-active,
+html.galaxy-home-active body,
+body[data-slug="index"] {
+  height: 100%;
+  overflow: hidden;
+  background: #02050b;
+}
+
+body[data-slug="index"] {
+  & > #quartz-root .page {
+    max-width: none;
+  }
+}
+
+.galaxy-home {
+  --ink: #e6edf4;
+  --muted: #8795a8;
+  position: fixed;
+  z-index: 800;
+  inset: 0;
+  overflow: hidden;
+  overflow: clip;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 50% 44%, rgba(36, 31, 74, 0.35), transparent 34%),
+    radial-gradient(circle at 18% 78%, rgba(12, 70, 79, 0.16), transparent 31%),
+    linear-gradient(145deg, #01040a 0%, #050915 52%, #02050b 100%);
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
+  isolation: isolate;
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  button {
+    font: inherit;
+  }
+}
+
+.galaxy-stars,
+.galaxy-nebula,
+.galaxy-intro,
+.solar-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.galaxy-stars {
+  z-index: -3;
+}
+
+.galaxy-nebula {
+  z-index: -2;
+  pointer-events: none;
+  filter: blur(54px);
+  opacity: 0.22;
+}
+
+.galaxy-nebula-a {
+  width: 60vw;
+  height: 25vw;
+  inset: 16% auto auto -14%;
+  transform: rotate(-20deg);
+  background: radial-gradient(ellipse, rgba(59, 55, 122, 0.8), transparent 68%);
+}
+
+.galaxy-nebula-b {
+  width: 54vw;
+  height: 24vw;
+  inset: auto -12% 1% auto;
+  transform: rotate(18deg);
+  background: radial-gradient(ellipse, rgba(18, 95, 102, 0.6), transparent 70%);
+}
+
+.galaxy-intro {
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 520ms ease,
+    transform 900ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    filter 900ms ease;
+}
+
+.galaxy-intro-copy {
+  position: relative;
+  z-index: 3;
+  width: min(90vw, 760px);
+  padding: 2rem;
+  text-align: center;
+}
+
+.galaxy-kicker {
+  margin: 0 0 1rem;
+  color: #7fa4bc;
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.42em;
+}
+
+.galaxy-intro h1 {
+  margin: 0;
+  color: #e8edf3;
+  font-size: clamp(2.45rem, 6vw, 5.8rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1.05;
+  text-shadow: 0 2px 32px rgba(125, 146, 179, 0.16);
+}
+
+.galaxy-intro-text {
+  margin: 1.25rem auto 0;
+  color: #9da8b5;
+  font-size: clamp(0.88rem, 1.6vw, 1.05rem);
+  letter-spacing: 0.12em;
+}
+
+.galaxy-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0 1.7rem;
+  color: #7e8b9b;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.galaxy-stats strong {
+  margin-right: 0.28rem;
+  color: #cad7e2;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 1rem;
+}
+
+.galaxy-enter {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.35rem 0.8rem 1.6rem;
+  border: 1px solid rgba(125, 168, 189, 0.34);
+  border-radius: 999px;
+  color: #d8e6ed;
+  background: rgba(7, 18, 29, 0.62);
+  box-shadow:
+    inset 0 0 24px rgba(83, 133, 152, 0.08),
+    0 14px 40px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  backdrop-filter: blur(12px);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.galaxy-enter:hover,
+.galaxy-enter:focus-visible {
+  border-color: rgba(132, 188, 210, 0.72);
+  background: rgba(12, 29, 44, 0.78);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.galaxy-enter i {
+  color: #7bb4c7;
+  font-size: 1.2rem;
+  font-style: normal;
+}
+
+.galaxy-cluster {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: min(82vw, 980px);
+  aspect-ratio: 2 / 0.82;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    rgba(87, 76, 144, 0.25),
+    rgba(23, 41, 67, 0.08) 38%,
+    transparent 70%
+  );
+  filter: blur(0.2px);
+  opacity: 0.82;
+}
+
+.galaxy-arm {
+  position: absolute;
+  inset: 12%;
+  border: 1px solid rgba(118, 113, 181, 0.16);
+  border-radius: 50%;
+  box-shadow:
+    0 0 34px rgba(69, 81, 149, 0.1),
+    inset 0 0 38px rgba(49, 101, 125, 0.08);
+  animation: galaxy-spin 38s linear infinite;
+}
+
+.galaxy-arm::before,
+.galaxy-arm::after {
+  position: absolute;
+  width: 38%;
+  height: 2px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, rgba(139, 137, 201, 0.3), transparent);
+  content: "";
+  filter: blur(1px);
+}
+
+.galaxy-arm::before {
+  top: 23%;
+  left: 2%;
+  transform: rotate(-18deg);
+}
+.galaxy-arm::after {
+  right: 2%;
+  bottom: 23%;
+  transform: rotate(-18deg);
+}
+.galaxy-arm-b {
+  inset: 23% 4%;
+  transform: rotate(23deg);
+  animation-duration: 52s;
+}
+.galaxy-arm-c {
+  inset: 4% 19%;
+  transform: rotate(-27deg);
+  animation-direction: reverse;
+  animation-duration: 46s;
+}
+
+.galaxy-cluster-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(190, 180, 218, 0.42),
+    rgba(97, 83, 151, 0.18) 25%,
+    transparent 68%
+  );
+  filter: blur(13px);
+}
+
+.galaxy-scroll-hint {
+  position: absolute;
+  bottom: 1.7rem;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  color: rgba(143, 158, 176, 0.55);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.24em;
+}
+
+.solar-scene {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.15);
+  transition:
+    opacity 680ms 200ms ease,
+    transform 900ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.galaxy-home.is-entered .galaxy-intro {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(2.2);
+  filter: blur(12px);
+}
+
+.galaxy-home.is-entered .solar-scene {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.galaxy-hud,
+.galaxy-clock {
+  position: absolute;
+  z-index: 20;
+  top: 1.35rem;
+  color: var(--muted);
+}
+
+.galaxy-hud-left {
+  left: 1.5rem;
+}
+
+.galaxy-hud-eyebrow,
+.galaxy-hud strong,
+.galaxy-clock span,
+.galaxy-clock strong {
+  display: block;
+}
+
+.galaxy-hud-eyebrow,
+.galaxy-clock span {
+  margin: 0 0 0.28rem;
+  color: #638196;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+}
+
+.galaxy-hud strong {
+  color: #cbd5df;
+  font-size: 0.94rem;
+  font-weight: 560;
+  letter-spacing: 0.08em;
+}
+
+.galaxy-hud button {
+  min-height: 44px;
+  margin: 0.35rem 0 0 -0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  color: #748a9c;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+
+.galaxy-hud button:hover,
+.galaxy-hud button:focus-visible {
+  color: #b7cfdd;
+  outline: none;
+}
+
+.galaxy-clock {
+  right: 1.5rem;
+  text-align: right;
+}
+
+.galaxy-clock strong {
+  color: #b9c9d5;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: clamp(0.72rem, 1.2vw, 0.92rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.solar-orbits {
+  position: absolute;
+  inset: 8.5% 5% 7%;
+}
+
+.solar-orbit {
+  position: absolute;
+  top: 51%;
+  left: 50%;
+  width: calc(13% + var(--orbit) * 9%);
+  aspect-ratio: 2.3 / 1;
+  transform: translate(-50%, -50%) rotate(-7deg);
+  border: 1px solid rgba(111, 139, 161, 0.105);
+  border-radius: 50%;
+  box-shadow: inset 0 0 18px rgba(54, 76, 102, 0.02);
+}
+
+@for $i from 1 through 8 {
+  .orbit-#{$i} {
+    --orbit: #{$i};
+  }
+}
+
+.celestial {
+  --visual-size: calc(var(--size) * 1px);
+  position: absolute;
+  z-index: 4;
+  top: calc(var(--y) * 1%);
+  left: calc(var(--x) * 1%);
+  display: block;
+  width: max(44px, calc(var(--visual-size) + 16px));
+  height: max(44px, calc(var(--visual-size) + 16px));
+  padding: 8px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
+}
+
+.celestial[data-active="true"] {
+  cursor: pointer;
+}
+.celestial[data-active="false"] {
+  cursor: default;
+  filter: saturate(0.5);
+  opacity: 0.46;
+}
+
+.celestial-visual {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: var(--visual-size);
+  height: var(--visual-size);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  transition:
+    transform 220ms ease,
+    filter 220ms ease;
+}
+
+.celestial-visual::after {
+  position: absolute;
+  inset: -32%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--planet-glow, rgba(78, 137, 154, 0.22)),
+    transparent 67%
+  );
+  content: "";
+  opacity: 0.76;
+}
+
+.celestial-visual i {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgba(215, 226, 235, 0.14);
+  border-radius: 50%;
+  background: var(--planet-fill);
+  box-shadow:
+    inset -8px -6px 14px rgba(0, 0, 0, 0.58),
+    inset 4px 4px 9px rgba(255, 255, 255, 0.08),
+    0 0 18px var(--planet-glow, rgba(78, 137, 154, 0.2));
+}
+
+.celestial[data-active="true"]:hover .celestial-visual,
+.celestial[data-active="true"]:focus-visible .celestial-visual {
+  transform: translate(-50%, -50%) scale(1.12);
+  filter: brightness(1.08);
+}
+
+.celestial:focus-visible {
+  outline: 1px solid rgba(126, 190, 210, 0.78);
+  outline-offset: 3px;
+}
+
+.celestial-card {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  left: 50%;
+  display: block;
+  width: max-content;
+  min-width: 155px;
+  padding: 0.58rem 0.7rem;
+  transform: translate(-50%, 6px);
+  border: 1px solid rgba(127, 155, 177, 0.18);
+  border-radius: 8px;
+  opacity: 0;
+  color: #d8e1e9;
+  background: rgba(3, 9, 17, 0.84);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+  pointer-events: none;
+  text-align: left;
+  backdrop-filter: blur(12px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.celestial:hover .celestial-card,
+.celestial:focus-visible .celestial-card {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.celestial-card small,
+.celestial-card strong,
+.celestial-card em {
+  display: block;
+}
+.celestial-card small {
+  color: #627e91;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+}
+.celestial-card strong {
+  margin-top: 0.28rem;
+  font-size: 0.76rem;
+  font-weight: 560;
+  letter-spacing: 0.05em;
+}
+.celestial-card em {
+  margin-top: 0.18rem;
+  color: #81909f;
+  font-size: 0.6rem;
+  font-style: normal;
+}
+
+.sun {
+  --planet-fill: radial-gradient(
+    circle at 37% 35%,
+    #f2bd65 0%,
+    #bf6b24 26%,
+    #733613 55%,
+    #2d1308 76%
+  );
+  --planet-glow: rgba(225, 130, 52, 0.32);
+  z-index: 3;
+}
+.mercury {
+  --planet-fill: radial-gradient(circle at 35% 32%, #9c958d, #4f4b48 52%, #222126);
+  --planet-glow: rgba(150, 145, 139, 0.12);
+}
+.venus {
+  --planet-fill: repeating-linear-gradient(9deg, #b87b3e 0 4px, #73502f 6px 9px, #d09a5a 10px 12px);
+  --planet-glow: rgba(202, 132, 71, 0.21);
+}
+.earth {
+  --planet-fill:
+    radial-gradient(ellipse at 62% 32%, #698c6d 0 14%, transparent 15%),
+    radial-gradient(ellipse at 34% 65%, #789375 0 12%, transparent 13%),
+    radial-gradient(circle at 38% 35%, #3c7e9b, #17435f 61%, #0a1f32);
+  --planet-glow: rgba(60, 143, 178, 0.28);
+}
+.mars {
+  --planet-fill: radial-gradient(circle at 38% 34%, #a84e31, #63271e 57%, #2b1110);
+  --planet-glow: rgba(173, 73, 43, 0.19);
+}
+.jupiter {
+  --planet-fill: repeating-linear-gradient(
+    4deg,
+    #a88062 0 5px,
+    #604f49 7px 10px,
+    #bd9a73 12px 16px,
+    #50413d 17px 19px
+  );
+  --planet-glow: rgba(170, 137, 103, 0.18);
+}
+.saturn {
+  --planet-fill: repeating-linear-gradient(3deg, #baa875 0 4px, #76694e 5px 7px, #d0bd83 8px 11px);
+  --planet-glow: rgba(184, 165, 108, 0.17);
+}
+.saturn .celestial-visual::before {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 168%;
+  height: 38%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  border: 3px solid rgba(181, 158, 102, 0.65);
+  border-right-color: rgba(98, 81, 58, 0.38);
+  border-radius: 50%;
+  content: "";
+  box-shadow: 0 0 6px rgba(169, 146, 92, 0.18);
+}
+.uranus {
+  --planet-fill: radial-gradient(circle at 37% 34%, #5f9ba4, #315c67 58%, #132c39);
+  --planet-glow: rgba(76, 151, 162, 0.14);
+}
+.neptune {
+  --planet-fill: radial-gradient(circle at 38% 35%, #3b5f9d, #203868 58%, #0d1835);
+  --planet-glow: rgba(60, 92, 161, 0.16);
+}
+
+.solar-caption {
+  position: absolute;
+  z-index: 8;
+  bottom: 5.25rem;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  color: #64798a;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+
+.solar-caption span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin: 0 0.6rem 0.1rem 0;
+  border-radius: 50%;
+  background: #6aa1b0;
+  box-shadow: 0 0 8px rgba(94, 156, 173, 0.55);
+}
+
+.galaxy-dock {
+  position: absolute;
+  z-index: 30;
+  bottom: 1.15rem;
+  left: 50%;
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.3rem;
+  transform: translateX(-50%);
+  border: 1px solid rgba(116, 144, 165, 0.17);
+  border-radius: 14px;
+  background: rgba(3, 9, 17, 0.72);
+  box-shadow:
+    0 15px 44px rgba(0, 0, 0, 0.35),
+    inset 0 0 26px rgba(84, 122, 142, 0.035);
+  backdrop-filter: blur(16px);
+}
+
+.galaxy-dock button {
+  display: flex;
+  min-width: 92px;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 10px;
+  color: #7e90a0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.galaxy-dock button:hover,
+.galaxy-dock button:focus-visible,
+.galaxy-dock button[aria-expanded="true"] {
+  color: #c4d6df;
+  background: rgba(76, 117, 137, 0.13);
+  outline: none;
+}
+
+.galaxy-dock i {
+  color: #668fa1;
+  font-size: 1.06rem;
+  font-style: normal;
+}
+
+.galaxy-drawer-backdrop {
+  position: absolute;
+  z-index: 38;
+  inset: 0;
+  border: 0;
+  opacity: 0;
+  background: rgba(1, 4, 9, 0.42);
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.galaxy-directory-panel {
+  position: absolute;
+  z-index: 40;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(390px, 92vw);
+  padding: 1.45rem;
+  transform: translateX(104%);
+  border-left: 1px solid rgba(113, 148, 169, 0.18);
+  color: #d4dee6;
+  background: rgba(3, 8, 15, 0.91);
+  box-shadow: -24px 0 64px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(24px);
+  transition: transform 280ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.galaxy-directory-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.galaxy-directory-panel > header small {
+  color: #617f91;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.54rem;
+  letter-spacing: 0.2em;
+}
+
+.galaxy-directory-panel h2 {
+  margin: 0.32rem 0 0;
+  color: #dce6ed;
+  font-size: 1.28rem;
+  font-weight: 560;
+  letter-spacing: 0.1em;
+}
+
+.galaxy-directory-panel > header button {
+  width: 44px;
+  height: 44px;
+  margin: -0.5rem -0.5rem 0 0;
+  border: 0;
+  border-radius: 50%;
+  color: #718696;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.35rem;
+}
+
+.galaxy-directory-panel > header button:hover,
+.galaxy-directory-panel > header button:focus-visible {
+  color: #d2e0e7;
+  background: rgba(107, 146, 164, 0.1);
+  outline: none;
+}
+
+.galaxy-directory-panel > p {
+  margin: 0.7rem 0 1.5rem;
+  color: #687b8a;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.galaxy-directory-panel ol {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.galaxy-directory-panel li a {
+  display: grid;
+  min-height: 62px;
+  grid-template-columns: 2.2rem 1fr 1.4rem;
+  align-items: center;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.galaxy-directory-panel li a:hover,
+.galaxy-directory-panel li a:focus-visible {
+  border-color: rgba(105, 153, 173, 0.21);
+  background: rgba(62, 103, 123, 0.1);
+  outline: none;
+}
+
+.directory-order {
+  color: #53788a;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.66rem;
+}
+
+.directory-name strong,
+.directory-name small {
+  display: block;
+}
+.directory-name strong {
+  font-size: 0.78rem;
+  font-weight: 560;
+  letter-spacing: 0.05em;
+}
+.directory-name small {
+  margin-top: 0.2rem;
+  color: #667989;
+  font-size: 0.58rem;
+}
+.galaxy-directory-panel li a > i {
+  color: #587d8d;
+  font-style: normal;
+  text-align: right;
+}
+
+.galaxy-home.is-directory-open .galaxy-drawer-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.galaxy-home.is-directory-open .galaxy-directory-panel {
+  transform: translateX(0);
+}
+
+body[data-slug="index"] {
+  --search-z-index: 2000;
+}
+
+body[data-slug="index"] .global-graph-outer {
+  z-index: 2100 !important;
+}
+
+@keyframes galaxy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .galaxy-intro-copy {
+    padding: 1.2rem;
+  }
+  .galaxy-intro h1 {
+    font-size: clamp(2.25rem, 12vw, 4rem);
+    line-height: 1.18;
+  }
+  .galaxy-kicker {
+    font-size: 0.54rem;
+    letter-spacing: 0.27em;
+  }
+  .galaxy-intro-text {
+    max-width: 18rem;
+    line-height: 1.8;
+  }
+  .galaxy-stats {
+    gap: 1rem;
+    margin-top: 1.35rem;
+  }
+  .galaxy-scroll-hint {
+    bottom: 1rem;
+    font-size: 0.52rem;
+  }
+  .galaxy-hud,
+  .galaxy-clock {
+    top: 0.85rem;
+  }
+  .galaxy-hud-left {
+    left: 0.9rem;
+  }
+  .galaxy-clock {
+    right: 0.9rem;
+  }
+  .galaxy-hud strong {
+    max-width: 8rem;
+    font-size: 0.72rem;
+  }
+  .galaxy-hud-eyebrow {
+    font-size: 0.47rem;
+    letter-spacing: 0.16em;
+  }
+  .galaxy-clock span {
+    font-size: 0.45rem;
+  }
+  .galaxy-clock strong {
+    font-size: 0.61rem;
+  }
+  .solar-orbits {
+    inset: 16% 2% 10%;
+    transform: scale(0.98);
+  }
+  .solar-orbit {
+    width: calc(22% + var(--orbit) * 9.2%);
+    aspect-ratio: 1.28 / 1;
+  }
+  .celestial {
+    transform: translate(-50%, -50%) scale(0.82);
+  }
+  .sun {
+    --visual-size: 50px;
+  }
+  .jupiter {
+    --visual-size: 34px;
+  }
+  .saturn {
+    --visual-size: 30px;
+  }
+  .celestial-card {
+    min-width: 135px;
+    padding: 0.48rem 0.56rem;
+  }
+  .planet.jupiter .celestial-card,
+  .planet.uranus .celestial-card {
+    left: 0;
+    transform: translate(0, 6px);
+  }
+  .planet.jupiter:hover .celestial-card,
+  .planet.jupiter:focus-visible .celestial-card,
+  .planet.uranus:hover .celestial-card,
+  .planet.uranus:focus-visible .celestial-card {
+    transform: translate(0, 0);
+  }
+  .planet.saturn .celestial-card,
+  .planet.neptune .celestial-card {
+    right: 0;
+    left: auto;
+    transform: translate(0, 6px);
+  }
+  .planet.saturn:hover .celestial-card,
+  .planet.saturn:focus-visible .celestial-card,
+  .planet.neptune:hover .celestial-card,
+  .planet.neptune:focus-visible .celestial-card {
+    transform: translate(0, 0);
+  }
+  .solar-caption {
+    bottom: 5.2rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+  }
+  .galaxy-dock {
+    bottom: 0.75rem;
+    width: calc(100vw - 1.5rem);
+    justify-content: space-around;
+  }
+  .galaxy-dock button {
+    min-width: 0;
+    flex: 1 1 0;
+    padding: 0.5rem 0.3rem;
+  }
+  .galaxy-dock button span {
+    font-size: 0.58rem;
+  }
+  .galaxy-directory-panel {
+    top: auto;
+    width: 100%;
+    max-height: min(74vh, 620px);
+    padding: 1rem 1rem 1.25rem;
+    transform: translateY(104%);
+    border-top: 1px solid rgba(113, 148, 169, 0.2);
+    border-left: 0;
+    border-radius: 18px 18px 0 0;
+    overflow-y: auto;
+  }
+  .galaxy-home.is-directory-open .galaxy-directory-panel {
+    transform: translateY(0);
+  }
+  .celestial.is-peeked .celestial-card {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .planet.jupiter.is-peeked .celestial-card,
+  .planet.uranus.is-peeked .celestial-card,
+  .planet.saturn.is-peeked .celestial-card,
+  .planet.neptune.is-peeked .celestial-card {
+    transform: translate(0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .galaxy-home *,
+  .galaxy-home *::before,
+  .galaxy-home *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+}
