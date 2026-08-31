@@ -158,8 +158,8 @@ plugins:
         repelForce: 0.58
         centerForce: 0.26
         linkDistance: 40
-        fontSize: 0.72
-        opacityScale: 1.15
+        fontSize: 0.32
+        opacityScale: 0.92
         removeTags: []
         showTags: false
         focusOnHover: true
