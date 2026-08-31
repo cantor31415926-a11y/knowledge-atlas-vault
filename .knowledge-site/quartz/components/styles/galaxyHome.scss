@@ -358,6 +358,35 @@ body[data-slug="index"] {
   inset: 8.5% 5% 7%;
 }
 
+.solar-orbits::before,
+.solar-orbits::after {
+  position: absolute;
+  top: 51%;
+  left: 50%;
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.solar-orbits::before {
+  width: 48%;
+  aspect-ratio: 1.9 / 1;
+  transform: translate(-50%, -50%) rotate(-7deg);
+  background: radial-gradient(ellipse, rgba(100, 69, 151, 0.095), transparent 69%);
+  filter: blur(18px);
+}
+
+.solar-orbits::after {
+  width: 5px;
+  height: 5px;
+  transform: translate(-50%, -50%);
+  background: #f0a653;
+  box-shadow:
+    0 0 22px 7px rgba(227, 118, 39, 0.22),
+    0 0 72px 24px rgba(192, 75, 28, 0.08);
+  animation: solar-heartbeat 3.8s ease-in-out infinite;
+}
+
 .solar-orbit {
   position: absolute;
   top: 51%;
@@ -365,9 +394,26 @@ body[data-slug="index"] {
   width: calc(13% + var(--orbit) * 9%);
   aspect-ratio: 2.3 / 1;
   transform: translate(-50%, -50%) rotate(-7deg);
-  border: 1px solid rgba(111, 139, 161, 0.105);
+  border: 1px solid rgba(111, 139, 161, 0.13);
   border-radius: 50%;
-  box-shadow: inset 0 0 18px rgba(54, 76, 102, 0.02);
+  box-shadow:
+    inset 0 0 18px rgba(54, 76, 102, 0.025),
+    0 0 24px rgba(79, 105, 139, 0.018);
+}
+
+.solar-orbit::after {
+  position: absolute;
+  top: 50%;
+  right: -2px;
+  width: 3px;
+  height: 3px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: rgba(101, 191, 214, 0.58);
+  box-shadow: 0 0 9px rgba(74, 183, 211, 0.35);
+  content: "";
+  opacity: 0.3;
+  animation: orbit-beacon calc(5.5s + var(--orbit) * 1.4s) ease-in-out infinite alternate;
 }
 
 @for $i from 1 through 8 {
@@ -380,8 +426,8 @@ body[data-slug="index"] {
   --visual-size: calc(var(--size) * 1px);
   position: absolute;
   z-index: 4;
-  top: calc(var(--y) * 1%);
-  left: calc(var(--x) * 1%);
+  top: var(--orbit-y, calc(var(--y) * 1%));
+  left: var(--orbit-x, calc(var(--x) * 1%));
   display: block;
   width: max(44px, calc(var(--visual-size) + 16px));
   height: max(44px, calc(var(--visual-size) + 16px));
@@ -427,7 +473,8 @@ body[data-slug="index"] {
     transparent 67%
   );
   content: "";
-  opacity: 0.76;
+  opacity: 0.82;
+  animation: planet-glow 4.8s ease-in-out infinite alternate;
 }
 
 .celestial-visual i {
@@ -442,6 +489,29 @@ body[data-slug="index"] {
     inset -8px -6px 14px rgba(0, 0, 0, 0.58),
     inset 4px 4px 9px rgba(255, 255, 255, 0.08),
     0 0 18px var(--planet-glow, rgba(78, 137, 154, 0.2));
+  animation: planet-self-spin var(--spin-duration, 14s) linear infinite;
+  will-change: transform;
+}
+
+.planet::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--visual-size) + 13px);
+  height: calc(var(--visual-size) + 13px);
+  transform: translate(-50%, -50%) rotate(0deg);
+  border-radius: 50%;
+  background: conic-gradient(
+    from 90deg,
+    transparent 0 66%,
+    var(--planet-glow, rgba(91, 173, 196, 0.26)) 73%,
+    transparent 82% 100%
+  );
+  content: "";
+  opacity: 0.58;
+  pointer-events: none;
+  mask: radial-gradient(circle, transparent 56%, #000 60% 65%, transparent 69%);
+  animation: planet-energy-sweep 9s linear infinite;
 }
 
 .celestial[data-active="true"]:hover .celestial-visual,
@@ -517,8 +587,111 @@ body[data-slug="index"] {
     #733613 55%,
     #2d1308 76%
   );
-  --planet-glow: rgba(225, 130, 52, 0.32);
+  --planet-glow: rgba(234, 132, 45, 0.44);
+  --spin-duration: 17s;
+  z-index: 6;
+}
+
+.sun .celestial-visual {
+  filter: saturate(1.08);
+  animation: solar-float 5.8s ease-in-out infinite;
+}
+
+.sun .celestial-visual::before {
+  position: absolute;
+  z-index: -1;
+  inset: -20%;
+  border: 1px solid rgba(239, 148, 69, 0.28);
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    rgba(244, 156, 67, 0.2),
+    transparent 18%,
+    rgba(211, 91, 31, 0.14) 32%,
+    transparent 46% 64%,
+    rgba(242, 149, 58, 0.18) 78%,
+    transparent
+  );
+  content: "";
+  filter: blur(1px);
+  opacity: 0.86;
+  animation: solar-corona-spin 12s linear infinite;
+  mask: radial-gradient(circle, transparent 55%, #000 57% 64%, transparent 72%);
+}
+
+.sun .celestial-visual::after {
+  inset: -72%;
+  background: radial-gradient(
+    circle,
+    rgba(239, 146, 59, 0.26) 0%,
+    rgba(210, 86, 26, 0.13) 26%,
+    rgba(147, 49, 23, 0.045) 49%,
+    transparent 72%
+  );
+  filter: blur(2px);
+  opacity: 0.92;
+  animation: solar-aura 4.6s ease-in-out infinite alternate;
+}
+
+.sun .celestial-visual i {
+  border-color: rgba(255, 204, 132, 0.3);
+  box-shadow:
+    inset -16px -10px 24px rgba(74, 24, 5, 0.62),
+    inset 8px 7px 16px rgba(255, 220, 147, 0.18),
+    0 0 20px rgba(242, 151, 66, 0.3),
+    0 0 48px rgba(215, 92, 27, 0.16);
+}
+
+.sun .celestial-visual i::before,
+.sun .celestial-visual i::after {
+  position: absolute;
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.sun .celestial-visual i::before {
+  inset: -18%;
+  background: conic-gradient(
+    from 35deg,
+    transparent 0 8%,
+    rgba(255, 211, 125, 0.18) 12%,
+    transparent 21% 34%,
+    rgba(130, 46, 12, 0.28) 40%,
+    transparent 52% 68%,
+    rgba(255, 187, 87, 0.15) 76%,
+    transparent 88%
+  );
+  mix-blend-mode: screen;
+}
+
+.sun .celestial-visual i::after {
+  inset: 10%;
+  background:
+    radial-gradient(circle at 68% 30%, rgba(91, 29, 7, 0.42) 0 5%, transparent 7%),
+    radial-gradient(circle at 32% 68%, rgba(103, 33, 9, 0.38) 0 4%, transparent 6%),
+    radial-gradient(circle at 54% 52%, rgba(255, 201, 109, 0.16) 0 8%, transparent 10%);
+}
+
+.solar-energy-particles {
+  position: absolute;
   z-index: 3;
+  inset: 50%;
+  pointer-events: none;
+}
+
+.solar-energy-particles b {
+  --particle-angle: calc(var(--particle-index) * 30deg);
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  opacity: 0;
+  background: #f3b66c;
+  box-shadow: 0 0 7px rgba(240, 131, 55, 0.58);
+  animation: solar-particle 2.8s ease-out infinite;
+  animation-delay: calc(var(--particle-index) * -0.21s);
 }
 .mercury {
   --planet-fill: radial-gradient(circle at 35% 32%, #9c958d, #4f4b48 52%, #222126);
@@ -801,9 +974,110 @@ body[data-slug="index"] .global-graph-outer {
   z-index: 2100 !important;
 }
 
+html.galaxy-graph-active body[data-slug="index"] .sidebar:has(.global-graph-outer.active) {
+  z-index: 2050 !important;
+}
+
+body[data-slug="index"] > .global-graph-outer {
+  position: fixed;
+  z-index: 2100;
+  inset: 0;
+  display: none;
+  width: 100vw;
+  height: 100%;
+  overflow: hidden;
+}
+
+body[data-slug="index"] > .global-graph-outer.active {
+  display: block;
+}
+
 @keyframes galaxy-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes planet-self-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes planet-energy-sweep {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes planet-glow {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 0.92;
+  }
+}
+
+@keyframes solar-corona-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes solar-aura {
+  from {
+    transform: scale(0.92);
+    opacity: 0.72;
+  }
+  to {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes solar-float {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.035);
+  }
+}
+
+@keyframes solar-heartbeat {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+}
+
+@keyframes solar-particle {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateX(calc(var(--visual-size) * 0.48)) scale(0.5);
+  }
+  22% {
+    opacity: 0.78;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateX(calc(var(--visual-size) * 0.86)) scale(0.08);
+  }
+}
+
+@keyframes orbit-beacon {
+  from {
+    opacity: 0.18;
+  }
+  to {
+    opacity: 0.62;
   }
 }
 
@@ -867,7 +1141,7 @@ body[data-slug="index"] .global-graph-outer {
     transform: translate(-50%, -50%) scale(0.82);
   }
   .sun {
-    --visual-size: 50px;
+    --visual-size: 74px;
   }
   .jupiter {
     --visual-size: 34px;
@@ -879,27 +1153,21 @@ body[data-slug="index"] .global-graph-outer {
     min-width: 135px;
     padding: 0.48rem 0.56rem;
   }
-  .planet.jupiter .celestial-card,
-  .planet.uranus .celestial-card {
+  .planet[data-side="left"] .celestial-card {
     left: 0;
     transform: translate(0, 6px);
   }
-  .planet.jupiter:hover .celestial-card,
-  .planet.jupiter:focus-visible .celestial-card,
-  .planet.uranus:hover .celestial-card,
-  .planet.uranus:focus-visible .celestial-card {
+  .planet[data-side="left"]:hover .celestial-card,
+  .planet[data-side="left"]:focus-visible .celestial-card {
     transform: translate(0, 0);
   }
-  .planet.saturn .celestial-card,
-  .planet.neptune .celestial-card {
+  .planet[data-side="right"] .celestial-card {
     right: 0;
     left: auto;
     transform: translate(0, 6px);
   }
-  .planet.saturn:hover .celestial-card,
-  .planet.saturn:focus-visible .celestial-card,
-  .planet.neptune:hover .celestial-card,
-  .planet.neptune:focus-visible .celestial-card {
+  .planet[data-side="right"]:hover .celestial-card,
+  .planet[data-side="right"]:focus-visible .celestial-card {
     transform: translate(0, 0);
   }
   .solar-caption {
@@ -938,10 +1206,7 @@ body[data-slug="index"] .global-graph-outer {
     opacity: 1;
     transform: translate(-50%, 0);
   }
-  .planet.jupiter.is-peeked .celestial-card,
-  .planet.uranus.is-peeked .celestial-card,
-  .planet.saturn.is-peeked .celestial-card,
-  .planet.neptune.is-peeked .celestial-card {
+  .planet[data-side].is-peeked .celestial-card {
     transform: translate(0, 0);
   }
 }

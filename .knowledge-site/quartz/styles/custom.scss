@@ -129,15 +129,103 @@ button:hover {
 }
 
 .global-graph-outer.active {
-  background: rgba(2, 4, 13, 0.9);
-  backdrop-filter: blur(22px);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(48, 34, 91, 0.3), transparent 34%),
+    radial-gradient(circle at 12% 82%, rgba(20, 102, 116, 0.13), transparent 32%),
+    rgba(1, 4, 11, 0.94);
+  backdrop-filter: blur(24px);
 }
 
 .global-graph-container {
-  border: 1px solid rgba(85, 229, 255, 0.22);
-  border-radius: 22px;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: min(94vw, 1680px) !important;
+  height: min(90vh, 980px) !important;
+  overflow: hidden;
+  transform: translate(-50%, -50%) !important;
+  border: 1px solid rgba(91, 193, 219, 0.26) !important;
+  border-radius: 20px !important;
   background:
-    radial-gradient(circle at 50% 40%, rgba(112, 77, 255, 0.16), transparent 56%), #050816;
+    radial-gradient(circle at 50% 46%, rgba(86, 57, 138, 0.19), transparent 42%),
+    radial-gradient(circle at 20% 78%, rgba(25, 100, 118, 0.1), transparent 34%),
+    radial-gradient(circle, rgba(123, 183, 206, 0.14) 0 1px, transparent 1.4px) 0 0 / 47px 47px,
+    radial-gradient(circle, rgba(137, 114, 195, 0.11) 0 1px, transparent 1.3px) 20px 17px / 71px
+      71px,
+    #020711 !important;
+  box-shadow:
+    0 0 0 1px rgba(142, 116, 211, 0.08),
+    0 0 68px rgba(54, 112, 142, 0.1),
+    0 34px 100px rgba(0, 0, 0, 0.52) !important;
+}
+
+.global-graph-container::before,
+.global-graph-container::after {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.13em;
+}
+
+.global-graph-container::before {
+  top: 1rem;
+  left: 1.15rem;
+  padding: 0.52rem 0.72rem;
+  border: 1px solid rgba(90, 180, 205, 0.18);
+  border-radius: 8px;
+  color: #9bb7c6;
+  background: rgba(3, 10, 19, 0.74);
+  box-shadow: inset 0 0 20px rgba(71, 151, 177, 0.045);
+  content: "GLOBAL KNOWLEDGE GRAPH  //  " attr(data-note-count) " NOTES";
+  font-size: 0.62rem;
+  backdrop-filter: blur(12px);
+}
+
+.global-graph-container::after {
+  right: 1.2rem;
+  bottom: 1rem;
+  color: rgba(133, 164, 181, 0.66);
+  content: "DRAG NODE  ·  SCROLL TO ZOOM  ·  ESC TO CLOSE";
+  font-size: 0.52rem;
+}
+
+.global-graph-container canvas {
+  position: relative;
+  z-index: 1;
+}
+
+html.galaxy-graph-active {
+  --light: #020711;
+  --lightgray: #213349;
+  --gray: #79aebe;
+  --dark: #d9e8ef;
+  --secondary: #eeb06a;
+  --tertiary: #59d8f4;
+}
+
+@media (max-width: 800px) {
+  .global-graph-container {
+    width: 96vw !important;
+    height: 86vh !important;
+    border-radius: 15px !important;
+  }
+
+  .global-graph-container::before {
+    top: 0.65rem;
+    left: 0.7rem;
+    max-width: calc(100% - 1.4rem);
+    overflow: hidden;
+    font-size: 0.5rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .global-graph-container::after {
+    right: 0.8rem;
+    bottom: 0.7rem;
+    font-size: 0.43rem;
+  }
 }
 
 .atlas-hero {

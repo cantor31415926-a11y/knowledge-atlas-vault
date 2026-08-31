@@ -27,6 +27,17 @@ test("水星、天王星和海王星保持不可导航", () => {
   )
 })
 
+test("八颗行星拥有唯一轨道和可用的运动参数", () => {
+  assert.deepEqual(
+    GALAXY_BODIES.map((body) => body.orbit),
+    [1, 2, 3, 4, 5, 6, 7, 8],
+  )
+  for (const body of GALAXY_BODIES) {
+    assert.ok(body.phase >= 0 && body.phase < 360)
+    assert.ok(body.duration >= 20)
+  }
+})
+
 test("北京时间格式不受本地时区影响", () => {
   assert.equal(formatBeijingTime(new Date("2026-08-30T00:04:05.000Z")), "2026.08.30 / 08:04:05")
 })

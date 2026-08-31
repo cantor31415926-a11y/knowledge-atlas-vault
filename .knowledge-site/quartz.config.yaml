@@ -155,15 +155,15 @@ plugins:
         zoom: true
         depth: -1
         scale: 0.95
-        repelForce: 0.8
-        centerForce: 0.2
-        linkDistance: 42
-        fontSize: 0.66
-        opacityScale: 1
+        repelForce: 0.58
+        centerForce: 0.26
+        linkDistance: 40
+        fontSize: 0.72
+        opacityScale: 1.15
         removeTags: []
-        showTags: true
+        showTags: false
         focusOnHover: true
-        enableRadial: false
+        enableRadial: true
     layout:
       position: right
       priority: 10

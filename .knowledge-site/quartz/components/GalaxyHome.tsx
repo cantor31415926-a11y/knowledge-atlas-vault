@@ -29,7 +29,7 @@ export default (() => {
     const abilityCount = noteCount(allFiles, "🌳 能力树搭建")
 
     return (
-      <section class="galaxy-home" aria-label="旺哥的第二大脑银河导航">
+      <section class="galaxy-home" aria-label="旺哥的第二大脑银河导航" data-note-count={notes}>
         <canvas class="galaxy-stars" aria-hidden="true" />
         <div class="galaxy-nebula galaxy-nebula-a" aria-hidden="true" />
         <div class="galaxy-nebula galaxy-nebula-b" aria-hidden="true" />
@@ -83,12 +83,17 @@ export default (() => {
             <a
               class="celestial sun"
               href={categoryHref("🌳 能力树搭建")}
-              style={{ "--x": 50, "--y": 51, "--size": 72 }}
+              style={{ "--x": 50, "--y": 51, "--size": 112 }}
               data-active="true"
               aria-label={`太阳，03. 能力树，${abilityCount} 篇笔记，进入分类`}
             >
               <span class="celestial-visual">
                 <i />
+                <span class="solar-energy-particles" aria-hidden="true">
+                  {Array.from({ length: 12 }, (_, index) => (
+                    <b style={{ "--particle-index": index }} />
+                  ))}
+                </span>
               </span>
               <span class="celestial-card">
                 <small>太阳 · SOL</small>
@@ -114,7 +119,12 @@ export default (() => {
                   </span>
                 </>
               )
-              const style = { "--x": body.x, "--y": body.y, "--size": body.size }
+              const style = {
+                "--x": body.x,
+                "--y": body.y,
+                "--size": body.size,
+                "--spin-duration": `${Math.max(8, Math.round(body.duration / 4))}s`,
+              }
 
               return body.folder ? (
                 <a
@@ -122,6 +132,9 @@ export default (() => {
                   href={categoryHref(body.folder)}
                   style={style}
                   data-active="true"
+                  data-orbit={body.orbit}
+                  data-phase={body.phase}
+                  data-duration={body.duration}
                   aria-label={label}
                 >
                   {content}
@@ -132,6 +145,9 @@ export default (() => {
                   type="button"
                   style={style}
                   data-active="false"
+                  data-orbit={body.orbit}
+                  data-phase={body.phase}
+                  data-duration={body.duration}
                   aria-label={label}
                   disabled
                 >

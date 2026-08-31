@@ -16,13 +16,22 @@ function setupGalaxyHome() {
   const directoryAction = root.querySelector<HTMLButtonElement>("[data-galaxy-directory]")
   const graphAction = root.querySelector<HTMLButtonElement>("[data-galaxy-graph]")
   const panel = root.querySelector<HTMLElement>("[data-galaxy-panel]")
+  const orbitSystem = root.querySelector<HTMLElement>(".solar-orbits")
+  const orbitalBodies = root.querySelectorAll<HTMLElement>(".planet[data-orbit]")
+  const graphOverlay = document.querySelector<HTMLElement>(".global-graph-outer")
+  const graphOriginParent = graphOverlay?.parentElement ?? null
+  const graphOriginNext = graphOverlay?.nextSibling ?? null
   const panelCloseActions = root.querySelectorAll<HTMLButtonElement>("[data-galaxy-drawer-close]")
   const planets = root.querySelectorAll<HTMLAnchorElement>(".celestial[data-active='true']")
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
   const touchLayout = window.matchMedia("(hover: none), (pointer: coarse)")
-  let frame = 0
+  let starFrame = 0
+  let orbitFrame = 0
   let clockTimer = 0
   let lastFocused: HTMLElement | null = null
+  let orbitStarted = performance.now()
+  let orbitPausedAt = 0
+  let graphObserver: MutationObserver | null = null
   let particles: Array<{ x: number; y: number; radius: number; alpha: number; speed: number }> = []
 
   const setDirectory = (open: boolean) => {
@@ -110,17 +119,75 @@ function setupGalaxyHome() {
         }
       }
     }
-    if (!reduceMotion && !document.hidden) frame = requestAnimationFrame(drawStars)
+    if (!reduceMotion && !document.hidden) starFrame = requestAnimationFrame(drawStars)
+  }
+
+  const positionPlanets = (timestamp = performance.now()) => {
+    if (!orbitSystem) return
+    const bounds = orbitSystem.getBoundingClientRect()
+    if (bounds.width === 0 || bounds.height === 0) return
+
+    for (const planet of orbitalBodies) {
+      const orbit = Number(planet.dataset.orbit)
+      const phase = Number(planet.dataset.phase) * (Math.PI / 180)
+      const duration = Math.max(1, Number(planet.dataset.duration)) * 1000
+      const elapsed = reduceMotion ? 0 : timestamp - orbitStarted
+      const angle = phase + (elapsed / duration) * Math.PI * 2
+      const orbitWidth = bounds.width * (0.13 + orbit * 0.09)
+      const radiusX = orbitWidth / 2
+      const radiusY = orbitWidth / 4.6
+      const x = bounds.width * 0.5 + Math.cos(angle) * radiusX
+      const y = bounds.height * 0.51 + Math.sin(angle) * radiusY
+
+      planet.style.setProperty("--orbit-x", `${x}px`)
+      planet.style.setProperty("--orbit-y", `${y}px`)
+      planet.dataset.side = x < bounds.width * 0.5 ? "left" : "right"
+    }
+  }
+
+  const animatePlanets = (timestamp: number) => {
+    positionPlanets(timestamp)
+    if (!reduceMotion && !document.hidden) orbitFrame = requestAnimationFrame(animatePlanets)
+  }
+
+  const syncGraphState = () => {
+    const active = graphOverlay?.classList.contains("active") ?? false
+    if (active && graphOverlay && graphOverlay.parentElement !== document.body) {
+      document.body.append(graphOverlay)
+    } else if (
+      !active &&
+      graphOverlay &&
+      graphOriginParent &&
+      graphOverlay.parentElement === document.body
+    ) {
+      graphOriginParent.insertBefore(
+        graphOverlay,
+        graphOriginNext?.parentNode === graphOriginParent ? graphOriginNext : null,
+      )
+    }
+    document.documentElement.classList.toggle("galaxy-graph-active", active)
+    root.classList.toggle("is-graph-open", active)
   }
 
   const handleVisibility = () => {
-    cancelAnimationFrame(frame)
-    if (!document.hidden && !reduceMotion) frame = requestAnimationFrame(drawStars)
+    cancelAnimationFrame(starFrame)
+    cancelAnimationFrame(orbitFrame)
+    if (document.hidden) {
+      orbitPausedAt = performance.now()
+      return
+    }
+    if (!document.hidden && !reduceMotion) {
+      if (orbitPausedAt) orbitStarted += performance.now() - orbitPausedAt
+      orbitPausedAt = 0
+      starFrame = requestAnimationFrame(drawStars)
+      orbitFrame = requestAnimationFrame(animatePlanets)
+    }
   }
   const handleResize = () => {
-    cancelAnimationFrame(frame)
+    cancelAnimationFrame(starFrame)
     resizeCanvas()
     drawStars()
+    positionPlanets()
   }
   const handleEnter = () => {
     setScene(true)
@@ -135,10 +202,17 @@ function setupGalaxyHome() {
   const handleSearch = () => document.querySelector<HTMLButtonElement>(".search-button")?.click()
   const handleDirectory = () => setDirectory(!root.classList.contains("is-directory-open"))
   const handleGraph = () => {
-    window.setTimeout(
-      () => document.querySelector<HTMLButtonElement>(".global-graph-icon")?.click(),
-      0,
-    )
+    document.documentElement.classList.add("galaxy-graph-active")
+    root.classList.add("is-graph-open")
+    if (graphOverlay && graphOverlay.parentElement !== document.body) {
+      document.body.append(graphOverlay)
+    }
+    const graphContainer = graphOverlay?.querySelector<HTMLElement>(".global-graph-container")
+    graphContainer?.setAttribute("data-note-count", root.dataset.noteCount ?? "")
+    window.setTimeout(() => {
+      document.querySelector<HTMLButtonElement>(".global-graph-icon")?.click()
+      window.setTimeout(syncGraphState, 0)
+    }, 0)
   }
   const handleCloseDirectory = () => setDirectory(false)
   const handleKeydown = (event: KeyboardEvent) => {
@@ -162,6 +236,14 @@ function setupGalaxyHome() {
   clockTimer = window.setInterval(updateClock, 1000)
   resizeCanvas()
   drawStars()
+  positionPlanets()
+  if (!reduceMotion && !document.hidden) orbitFrame = requestAnimationFrame(animatePlanets)
+
+  if (graphOverlay) {
+    graphObserver = new MutationObserver(syncGraphState)
+    graphObserver.observe(graphOverlay, { attributes: true, attributeFilter: ["class"] })
+    syncGraphState()
+  }
 
   enter?.addEventListener("click", handleEnter)
   back?.addEventListener("click", handleBack)
@@ -176,8 +258,17 @@ function setupGalaxyHome() {
 
   window.addCleanup(() => {
     document.documentElement.classList.remove("galaxy-home-active")
-    cancelAnimationFrame(frame)
+    document.documentElement.classList.remove("galaxy-graph-active")
+    if (graphOverlay && graphOriginParent && graphOverlay.parentElement === document.body) {
+      graphOriginParent.insertBefore(
+        graphOverlay,
+        graphOriginNext?.parentNode === graphOriginParent ? graphOriginNext : null,
+      )
+    }
+    cancelAnimationFrame(starFrame)
+    cancelAnimationFrame(orbitFrame)
     clearInterval(clockTimer)
+    graphObserver?.disconnect()
     enter?.removeEventListener("click", handleEnter)
     back?.removeEventListener("click", handleBack)
     searchAction?.removeEventListener("click", handleSearch)
