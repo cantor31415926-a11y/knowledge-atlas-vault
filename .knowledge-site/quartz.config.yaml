@@ -154,16 +154,16 @@ plugins:
         drag: true
         zoom: true
         depth: -1
-        scale: 0.95
-        repelForce: 0.58
-        centerForce: 0.26
-        linkDistance: 40
-        fontSize: 0.32
-        opacityScale: 0.92
+        scale: 1.15
+        repelForce: 1.35
+        centerForce: 0.12
+        linkDistance: 120
+        fontSize: 0.24
+        opacityScale: 0.86
         removeTags: []
         showTags: false
         focusOnHover: true
-        enableRadial: true
+        enableRadial: false
     layout:
       position: right
       priority: 10
