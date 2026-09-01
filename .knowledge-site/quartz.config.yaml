@@ -6,7 +6,7 @@ configuration:
   enablePopovers: true
   analytics: null
   locale: zh-CN
-  baseUrl: wang-knowledge-atlas.pages.dev
+  baseUrl: cantor31415926-a11y.github.io/knowledge-atlas-vault
   ignorePatterns: []
   theme:
     fontOrigin: local
@@ -158,8 +158,8 @@ plugins:
         repelForce: 0.85
         centerForce: 0.2
         linkDistance: 62
-        fontSize: 0.28
-        opacityScale: 0.92
+        fontSize: 0.38
+        opacityScale: 1.35
         removeTags: []
         showTags: false
         focusOnHover: true

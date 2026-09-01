@@ -1,33 +1,56 @@
-name: Knowledge Atlas privacy checks
+name: Deploy Knowledge Atlas to GitHub Pages
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  validate:
-    strategy:
-      fail-fast: false
-      matrix:
-        site_mode: [public, private]
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: .knowledge-site
     env:
-      SITE_MODE: ${{ matrix.site_mode }}
+      SITE_MODE: public
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: .knowledge-site/package-lock.json
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
       - run: npm ci
       - run: npm run test:privacy
       - run: npm run build:site
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .knowledge-site/public
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

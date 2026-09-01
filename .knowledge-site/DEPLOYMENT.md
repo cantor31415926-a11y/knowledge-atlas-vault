@@ -2,21 +2,18 @@
 
 ## 当前站点
 
-- 唯一公开站：`https://wang-knowledge-atlas.pages.dev`
-- GitHub 仓库：`cantor31415926-a11y/knowledge-atlas-vault`（Private）
-- `main` 分支每次推送后由 Cloudflare Pages 自动构建。
+- 唯一公开站：`https://cantor31415926-a11y.github.io/knowledge-atlas-vault/`
+- GitHub 仓库：`cantor31415926-a11y/knowledge-atlas-vault`（Public）
+- `main` 分支每次推送后由 GitHub Actions 自动构建并发布到 GitHub Pages。
 - 当前模式为完整 Vault 公开，不再构建私人站或执行 `publish: true` 筛选。
 
-## Cloudflare Pages 设置
+## GitHub Pages 设置
 
-| 设置           | 值                             |
-| -------------- | ------------------------------ |
-| Project name   | `wang-knowledge-atlas`         |
-| Root directory | `.knowledge-site`              |
-| Build command  | `npm ci && npm run build:site` |
-| Build output   | `public`                       |
-| `SITE_MODE`    | `public`                       |
-| `NODE_VERSION` | `24`                           |
+- 仓库 `Settings → Pages → Build and deployment → Source` 选择 `GitHub Actions`。
+- 工作流文件为 `.github/workflows/knowledge-atlas.yml`。
+- 构建目录为 `.knowledge-site`，发布产物为 `.knowledge-site/public`。
+- `SITE_MODE=public`，Node.js 版本为 24。
+- 不需要 Cloudflare 账号、付款信息或安全认证。
 
 ## 本地验证
 

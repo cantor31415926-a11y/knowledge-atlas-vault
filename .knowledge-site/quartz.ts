@@ -5,16 +5,10 @@ import { PageTypes } from "./quartz/plugins"
 
 componentRegistry.register("GalaxyHome", GalaxyHome, "local")
 const galaxyHome = componentRegistry.instantiate(GalaxyHome)
-const isPrivate = process.env.SITE_MODE === "private"
 const config = await loadQuartzConfig({
-  pageTitle: isPrivate ? "旺哥的第二大脑 · 私人全库" : "旺哥的第二大脑",
-  baseUrl: isPrivate ? "wang-knowledge-atlas-private.pages.dev" : "wang-knowledge-atlas.pages.dev",
+  pageTitle: "旺哥的第二大脑",
+  baseUrl: "cantor31415926-a11y.github.io/knowledge-atlas-vault",
 })
-if (isPrivate) {
-  config.plugins.emitters = config.plugins.emitters.filter(
-    (emitter) => emitter.name !== "CustomOgImages",
-  )
-}
 const loadedLayout = await loadQuartzLayout()
 loadedLayout.byPageType.content.afterBody = [
   ...(loadedLayout.byPageType.content.afterBody ?? []),

@@ -16,7 +16,7 @@ function noteCount(allFiles: QuartzComponentProps["allFiles"], folder?: string) 
 }
 
 function categoryHref(folder: string) {
-  return `/${slugifyFilePath(folder as FilePath)}/`
+  return `./${slugifyFilePath(folder as FilePath)}/`
 }
 
 export default (() => {
