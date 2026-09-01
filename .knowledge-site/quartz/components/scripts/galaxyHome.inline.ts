@@ -32,6 +32,9 @@ function setupGalaxyHome() {
   let orbitStarted = performance.now()
   let orbitPausedAt = 0
   let graphObserver: MutationObserver | null = null
+  let graphMotionTimer = 0
+  let graphMotionCleanup: (() => void) | null = null
+  let graphFitTimers: number[] = []
   let particles: Array<{ x: number; y: number; radius: number; alpha: number; speed: number }> = []
 
   const setDirectory = (open: boolean) => {
@@ -201,7 +204,64 @@ function setupGalaxyHome() {
   }
   const handleSearch = () => document.querySelector<HTMLButtonElement>(".search-button")?.click()
   const handleDirectory = () => setDirectory(!root.classList.contains("is-directory-open"))
+  const clearGraphFitTimers = () => {
+    for (const timer of graphFitTimers) window.clearTimeout(timer)
+    graphFitTimers = []
+  }
+  const markGraphMotion = (graphContainer: HTMLElement) => {
+    window.clearTimeout(graphMotionTimer)
+    graphContainer.classList.add("is-interacting")
+    graphMotionTimer = window.setTimeout(() => {
+      graphContainer.classList.remove("is-interacting")
+    }, 650)
+  }
+  const fitGlobalGraph = (attempt = 0) => {
+    const graphContainer = graphOverlay?.querySelector<HTMLElement>(".global-graph-container")
+    const graphCanvas = graphContainer?.querySelector<HTMLCanvasElement>("canvas")
+    if (!graphContainer || !graphCanvas) {
+      if (attempt < 30) {
+        graphFitTimers.push(window.setTimeout(() => fitGlobalGraph(attempt + 1), 50))
+      }
+      return
+    }
+    if (graphCanvas.dataset.atlasFit === "true") return
+    graphCanvas.dataset.atlasFit = "true"
+
+    graphMotionCleanup?.()
+    const handleGraphMotion = () => markGraphMotion(graphContainer)
+    graphContainer.addEventListener("wheel", handleGraphMotion, { passive: true, capture: true })
+    graphContainer.addEventListener("pointerdown", handleGraphMotion, true)
+    graphContainer.addEventListener("pointerup", handleGraphMotion, true)
+    graphContainer.addEventListener("pointercancel", handleGraphMotion, true)
+    graphMotionCleanup = () => {
+      graphContainer.removeEventListener("wheel", handleGraphMotion, true)
+      graphContainer.removeEventListener("pointerdown", handleGraphMotion, true)
+      graphContainer.removeEventListener("pointerup", handleGraphMotion, true)
+      graphContainer.removeEventListener("pointercancel", handleGraphMotion, true)
+    }
+
+    const steps = reduceMotion ? 1 : 4
+    const deltaY = reduceMotion ? 400 : 100
+    for (let step = 0; step < steps; step++) {
+      graphFitTimers.push(
+        window.setTimeout(() => {
+          const bounds = graphCanvas.getBoundingClientRect()
+          graphCanvas.dispatchEvent(
+            new WheelEvent("wheel", {
+              bubbles: true,
+              cancelable: true,
+              clientX: bounds.left + bounds.width / 2,
+              clientY: bounds.top + bounds.height / 2,
+              deltaY,
+              view: window,
+            }),
+          )
+        }, step * 65),
+      )
+    }
+  }
   const handleGraph = () => {
+    clearGraphFitTimers()
     document.documentElement.classList.add("galaxy-graph-active")
     root.classList.add("is-graph-open")
     if (graphOverlay && graphOverlay.parentElement !== document.body) {
@@ -211,7 +271,10 @@ function setupGalaxyHome() {
     graphContainer?.setAttribute("data-note-count", root.dataset.noteCount ?? "")
     window.setTimeout(() => {
       document.querySelector<HTMLButtonElement>(".global-graph-icon")?.click()
-      window.setTimeout(syncGraphState, 0)
+      window.setTimeout(() => {
+        syncGraphState()
+        fitGlobalGraph()
+      }, 0)
     }, 0)
   }
   const handleCloseDirectory = () => setDirectory(false)
@@ -268,6 +331,9 @@ function setupGalaxyHome() {
     cancelAnimationFrame(starFrame)
     cancelAnimationFrame(orbitFrame)
     clearInterval(clockTimer)
+    clearGraphFitTimers()
+    window.clearTimeout(graphMotionTimer)
+    graphMotionCleanup?.()
     graphObserver?.disconnect()
     enter?.removeEventListener("click", handleEnter)
     back?.removeEventListener("click", handleBack)

@@ -157,6 +157,17 @@ button:hover {
     0 0 0 1px rgba(142, 116, 211, 0.08),
     0 0 68px rgba(54, 112, 142, 0.1),
     0 34px 100px rgba(0, 0, 0, 0.52) !important;
+  transition:
+    border-color 320ms ease,
+    box-shadow 320ms ease;
+}
+
+.global-graph-container.is-interacting {
+  border-color: rgba(92, 204, 230, 0.38) !important;
+  box-shadow:
+    0 0 0 1px rgba(97, 191, 220, 0.17),
+    0 0 88px rgba(54, 148, 181, 0.17),
+    0 34px 100px rgba(0, 0, 0, 0.52) !important;
 }
 
 .global-graph-container::before,
@@ -225,6 +236,12 @@ html.galaxy-graph-active {
     right: 0.8rem;
     bottom: 0.7rem;
     font-size: 0.43rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .global-graph-container {
+    transition: none;
   }
 }
 
