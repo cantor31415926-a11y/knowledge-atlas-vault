@@ -5,6 +5,22 @@ import styles from "./styles/galaxyHome.scss"
 // @ts-ignore: Quartz's esbuild pipeline loads *.inline.ts files as source strings.
 import script from "./scripts/galaxyHome.inline"
 
+function serializeSceneData(sectors: GalaxySector[]) {
+  return JSON.stringify(
+    sectors.map((sector) => ({
+      ...sector,
+      href: galaxyFolderHref(sector.folder),
+      children: sector.children.map((child) => ({
+        ...child,
+        href: galaxyFolderHref(child.folder),
+      })),
+    })),
+  ).replace(
+    /[<>&\u2028\u2029]/g,
+    (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`,
+  )
+}
+
 function CelestialBody({ sector }: { sector: GalaxySector }) {
   const label = `${sector.celestialName}，${sector.folder}，${sector.count} 篇笔记，点击展开二级目录`
   const style = {
@@ -90,7 +106,7 @@ function SectorPanel({ sector }: { sector: GalaxySector }) {
         <ol class="sector-child-orbit">
           {sector.children.map((child, index) => (
             <li key={child.id} style={{ "--child-index": index }}>
-              <a href={galaxyFolderHref(child.folder)}>
+              <a href={galaxyFolderHref(child.folder)} data-child-id={child.id}>
                 <i aria-hidden="true" />
                 <span>
                   <strong>{child.name}</strong>
@@ -118,9 +134,17 @@ export default (() => {
 
     const { sectors, sun, planets } = buildGalaxySectors(allFiles)
     const notes = sectors.reduce((total, sector) => total + sector.count, 0)
+    const planetById = new Map(planets.map((planet) => [planet.id, planet]))
+    const sceneSectors = sectors.map((sector) => planetById.get(sector.id) ?? sector)
 
     return (
-      <section class="galaxy-home" aria-label="旺哥的第二大脑银河导航" data-note-count={notes}>
+      <section
+        class="galaxy-home"
+        aria-label="旺哥的第二大脑银河导航"
+        data-note-count={notes}
+        data-galaxy-runtime="./static/galaxy-home-3d.js"
+      >
+        <canvas class="galaxy-webgl" aria-hidden="true" />
         <canvas class="galaxy-stars" aria-hidden="true" />
         <div class="galaxy-nebula galaxy-nebula-a" aria-hidden="true" />
         <div class="galaxy-nebula galaxy-nebula-b" aria-hidden="true" />
@@ -292,6 +316,12 @@ export default (() => {
             </ol>
           </aside>
         </div>
+
+        <script
+          type="application/json"
+          data-galaxy-data
+          dangerouslySetInnerHTML={{ __html: serializeSceneData(sceneSectors) }}
+        />
       </section>
     )
   }

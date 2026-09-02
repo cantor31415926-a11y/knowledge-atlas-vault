@@ -1,5 +1,11 @@
 const SESSION_KEY = "knowledge-atlas:galaxy-entered:v1"
 
+type GalaxySceneApi = {
+  setScene(entered: boolean): void
+  focusSector(sectorId: string | null): void
+  dispose(): void
+}
+
 function setupGalaxyHome() {
   const root = document.querySelector<HTMLElement>(".galaxy-home")
   if (!root || root.dataset.ready === "true") return
@@ -46,6 +52,8 @@ function setupGalaxyHome() {
   let lastSectorButton: HTMLButtonElement | null = null
   let graphMotionCleanup: (() => void) | null = null
   let graphFitTimers: number[] = []
+  let sceneApi: GalaxySceneApi | null = null
+  let runtimeCancelled = false
   let particles: Array<{ x: number; y: number; radius: number; alpha: number; speed: number }> = []
 
   const normalizeAngle = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle))
@@ -85,7 +93,10 @@ function setupGalaxyHome() {
   }
 
   const setSector = (sectorId: string | null, focusButton = false) => {
-    if ((root.dataset.selectedSector ?? null) !== sectorId) setOrbitFocus(sectorId)
+    if ((root.dataset.selectedSector ?? null) !== sectorId) {
+      if (root.dataset.webgl === "ready") sceneApi?.focusSector(sectorId)
+      else setOrbitFocus(sectorId)
+    }
     root.classList.toggle("is-sector-open", Boolean(sectorId))
     if (sectorId) root.dataset.selectedSector = sectorId
     else delete root.dataset.selectedSector
@@ -128,6 +139,7 @@ function setupGalaxyHome() {
     if (intro) intro.inert = entered
     if (solar) solar.inert = !entered
     setDirectory(false)
+    sceneApi?.setScene(entered)
     if (entered) {
       sessionStorage.setItem(SESSION_KEY, "1")
     } else {
@@ -196,6 +208,7 @@ function setupGalaxyHome() {
   }
 
   const positionPlanets = (timestamp = performance.now()) => {
+    if (root.dataset.webgl === "ready") return
     if (!orbitSystem) return
     const bounds = orbitSystem.getBoundingClientRect()
     if (bounds.width === 0 || bounds.height === 0) return
@@ -265,7 +278,7 @@ function setupGalaxyHome() {
       visibilityPausedAt = performance.now()
       return
     }
-    if (!document.hidden && !reduceMotion) {
+    if (!document.hidden && !reduceMotion && root.dataset.webgl !== "ready") {
       if (visibilityPausedAt && frozenOrbitElapsed === null)
         orbitStarted += performance.now() - visibilityPausedAt
       visibilityPausedAt = 0
@@ -274,6 +287,7 @@ function setupGalaxyHome() {
     }
   }
   const handleResize = () => {
+    if (root.dataset.webgl === "ready") return
     cancelAnimationFrame(starFrame)
     resizeCanvas()
     drawStars()
@@ -398,6 +412,37 @@ function setupGalaxyHome() {
     sectorActivationTimer = window.setTimeout(() => button.classList.remove("is-activating"), 900)
   }
 
+  const handleWebglFailed = () => {
+    cancelAnimationFrame(starFrame)
+    cancelAnimationFrame(orbitFrame)
+    resizeCanvas()
+    drawStars()
+    positionPlanets()
+    if (!reduceMotion && !document.hidden) orbitFrame = requestAnimationFrame(animatePlanets)
+  }
+
+  const loadRuntime = async () => {
+    const runtimePath = root.dataset.galaxyRuntime
+    if (!runtimePath) return
+    root.dataset.webgl = "loading"
+    try {
+      const runtimeUrl = new URL(runtimePath, document.baseURI).href
+      const module = (await import(runtimeUrl)) as {
+        mountGalaxyHome3D(root: HTMLElement): GalaxySceneApi
+      }
+      if (runtimeCancelled) return
+      sceneApi = module.mountGalaxyHome3D(root)
+      cancelAnimationFrame(starFrame)
+      cancelAnimationFrame(orbitFrame)
+      const selectedSector = root.dataset.selectedSector ?? null
+      if (selectedSector) sceneApi.focusSector(selectedSector)
+    } catch (error) {
+      root.dataset.webgl = "failed"
+      root.classList.remove("is-webgl-ready")
+      console.warn("[galaxy] 3D scene unavailable; using the 2D fallback", error)
+    }
+  }
+
   setScene(sessionStorage.getItem(SESSION_KEY) === "1")
   updateClock()
   clockTimer = window.setInterval(updateClock, 1000)
@@ -405,6 +450,7 @@ function setupGalaxyHome() {
   drawStars()
   positionPlanets()
   if (!reduceMotion && !document.hidden) orbitFrame = requestAnimationFrame(animatePlanets)
+  void loadRuntime()
 
   if (graphOverlay) {
     graphObserver = new MutationObserver(syncGraphState)
@@ -423,6 +469,7 @@ function setupGalaxyHome() {
   document.addEventListener("keydown", handleKeydown)
   window.addEventListener("resize", handleResize)
   document.addEventListener("visibilitychange", handleVisibility)
+  root.addEventListener("galaxy:webgl-failed", handleWebglFailed)
 
   window.addCleanup(() => {
     document.documentElement.classList.remove("galaxy-home-active")
@@ -453,6 +500,9 @@ function setupGalaxyHome() {
     document.removeEventListener("keydown", handleKeydown)
     window.removeEventListener("resize", handleResize)
     document.removeEventListener("visibilitychange", handleVisibility)
+    root.removeEventListener("galaxy:webgl-failed", handleWebglFailed)
+    runtimeCancelled = true
+    sceneApi?.dispose()
   })
 }
 

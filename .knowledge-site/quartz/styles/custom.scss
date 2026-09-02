@@ -85,14 +85,14 @@ pre {
 }
 
 .search > .search-button,
-button {
+button:not([data-sector-button]) {
   border: 1px solid rgba(156, 134, 255, 0.26);
   border-radius: 12px;
   background: rgba(16, 22, 48, 0.74);
 }
 
 .search > .search-button:hover,
-button:hover {
+button:not([data-sector-button]):hover {
   border-color: rgba(85, 229, 255, 0.55);
   box-shadow: 0 0 22px rgba(85, 229, 255, 0.1);
 }

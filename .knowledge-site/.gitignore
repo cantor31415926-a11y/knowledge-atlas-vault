@@ -12,4 +12,5 @@ private/
 replit.nix
 .quartz/
 quartz/cli/tui/dist/
+quartz/static/galaxy-home-3d.js
 .turbo/
