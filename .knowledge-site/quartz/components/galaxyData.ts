@@ -45,14 +45,14 @@ const PREFERRED_FOLDER_ORDER = [
 ]
 
 const PLANET_PRESETS: VisualPreset[] = [
-  { key: "earth", celestialName: "地球", size: 30 },
-  { key: "jupiter", celestialName: "木星", size: 48 },
-  { key: "mars", celestialName: "火星", size: 24 },
-  { key: "saturn", celestialName: "土星", size: 42 },
-  { key: "uranus", celestialName: "天王星", size: 32 },
-  { key: "venus", celestialName: "金星", size: 28 },
-  { key: "mercury", celestialName: "水星", size: 21 },
-  { key: "neptune", celestialName: "海王星", size: 34 },
+  { key: "earth", celestialName: "地球", size: 36 },
+  { key: "jupiter", celestialName: "木星", size: 58 },
+  { key: "mars", celestialName: "火星", size: 30 },
+  { key: "saturn", celestialName: "土星", size: 52 },
+  { key: "uranus", celestialName: "天王星", size: 40 },
+  { key: "venus", celestialName: "金星", size: 36 },
+  { key: "mercury", celestialName: "水星", size: 27 },
+  { key: "neptune", celestialName: "海王星", size: 42 },
 ]
 
 const FOLDER_PRESETS: Array<[RegExp, VisualPreset]> = [
@@ -147,7 +147,7 @@ export function buildGalaxySectors(files: GalaxyFile[]) {
   const sectors = orderedFolders.map<GalaxySector>(([folder, entry], index) => {
     const isSun = folder === sunFolder
     const preset = isSun
-      ? { key: "sun", celestialName: "太阳", size: 154 }
+      ? { key: "sun", celestialName: "太阳", size: 184 }
       : presetFor(folder, planetIndex++)
     const prefix = numericPrefix(folder)
     const order =
@@ -173,7 +173,7 @@ export function buildGalaxySectors(files: GalaxyFile[]) {
       orbit: 0,
       phase: 0,
       duration: 0,
-      size: isSun ? preset.size : Math.min(58, preset.size + Math.log2(entry.count + 1) * 1.7),
+      size: isSun ? preset.size : Math.min(68, preset.size + Math.log2(entry.count + 1) * 1.7),
       isSun,
     }
   })

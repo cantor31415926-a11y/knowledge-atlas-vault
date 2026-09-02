@@ -26,6 +26,7 @@ function CelestialBody({ sector }: { sector: GalaxySector }) {
       data-orbit={sector.orbit || undefined}
       data-phase={sector.phase || undefined}
       data-duration={sector.duration || undefined}
+      data-order={sector.order}
       aria-label={label}
       aria-expanded="false"
       aria-controls={`sector-panel-${sector.id}`}
@@ -36,11 +37,16 @@ function CelestialBody({ sector }: { sector: GalaxySector }) {
         {sector.isSun && <span class="fresnel-atmosphere" aria-hidden="true" />}
         {sector.isSun && (
           <span class="solar-energy-particles" aria-hidden="true">
-            {Array.from({ length: 18 }, (_, index) => (
+            {Array.from({ length: 24 }, (_, index) => (
               <b style={{ "--particle-index": index }} />
             ))}
           </span>
         )}
+      </span>
+      <span class="celestial-label" aria-hidden="true">
+        <small>{sector.order}</small>
+        <strong>{sector.folder}</strong>
+        <em>{sector.count} NOTES</em>
       </span>
       <span class="celestial-card">
         <small>
@@ -58,16 +64,17 @@ function CelestialBody({ sector }: { sector: GalaxySector }) {
 function SectorPanel({ sector }: { sector: GalaxySector }) {
   return (
     <section
-      class="sector-detail"
+      class={`sector-detail sector-${sector.visualKey}`}
       id={`sector-panel-${sector.id}`}
       data-sector-panel={sector.id}
+      style={{ "--child-count": sector.children.length }}
       aria-hidden="true"
       aria-label={`${sector.folder}二级目录`}
     >
       <header>
         <div>
           <small>
-            VAULT / {sector.order} / {sector.celestialName}
+            OBSIDIAN / {sector.order} / {sector.folder}
           </small>
           <h2>{sector.folder}</h2>
           <p>
@@ -159,11 +166,43 @@ export default (() => {
             <strong>{formatBeijingTime(new Date())}</strong>
           </time>
 
+          <div class="galaxy-dashboard-title" aria-hidden="true">
+            <small>WANG'S SECOND BRAIN</small>
+            <strong>KNOWLEDGE GALAXY</strong>
+            <span>
+              {notes} NOTES · {sectors.length} ACTIVE SECTORS
+            </span>
+          </div>
+
+          <aside class="galaxy-telemetry" aria-label="知识库实时统计">
+            <small>VAULT TELEMETRY</small>
+            <dl>
+              <div>
+                <dt>知识节点</dt>
+                <dd>{notes}</dd>
+              </div>
+              <div>
+                <dt>活跃星域</dt>
+                <dd>{sectors.length}</dd>
+              </div>
+              <div>
+                <dt>二级目录</dt>
+                <dd>{sectors.reduce((total, sector) => total + sector.children.length, 0)}</dd>
+              </div>
+            </dl>
+          </aside>
+
           <div
             class="solar-orbits"
             aria-label="真实知识目录太阳系"
             data-sector-count={sectors.length}
           >
+            <div class="solar-galaxy-disc" aria-hidden="true">
+              <span class="solar-galaxy-arm arm-a" />
+              <span class="solar-galaxy-arm arm-b" />
+              <span class="solar-galaxy-arm arm-c" />
+              <span class="solar-galaxy-dust" />
+            </div>
             {planets.map((planet) => (
               <span
                 key={`orbit-${planet.orbit}`}

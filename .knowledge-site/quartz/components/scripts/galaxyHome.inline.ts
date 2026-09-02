@@ -31,7 +31,11 @@ function setupGalaxyHome() {
   let clockTimer = 0
   let lastFocused: HTMLElement | null = null
   let orbitStarted = performance.now()
-  let orbitPausedAt = 0
+  let visibilityPausedAt = 0
+  let frozenOrbitElapsed: number | null = null
+  let orbitFocusFrom = 0
+  let orbitFocusTo = 0
+  let orbitFocusStarted = performance.now()
   let graphObserver: MutationObserver | null = null
   let graphMotionTimer = 0
   let sectorActivationTimer = 0
@@ -40,7 +44,44 @@ function setupGalaxyHome() {
   let graphFitTimers: number[] = []
   let particles: Array<{ x: number; y: number; radius: number; alpha: number; speed: number }> = []
 
+  const normalizeAngle = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle))
+  const orbitFocusOffset = (timestamp: number) => {
+    if (reduceMotion) return orbitFocusTo
+    const progress = Math.min(1, Math.max(0, (timestamp - orbitFocusStarted) / 900))
+    const eased = 1 - Math.pow(1 - progress, 3)
+    return orbitFocusFrom + (orbitFocusTo - orbitFocusFrom) * eased
+  }
+
+  const setOrbitFocus = (sectorId: string | null) => {
+    const now = performance.now()
+    const currentOffset = orbitFocusOffset(now)
+    orbitFocusFrom = currentOffset
+    orbitFocusStarted = now
+
+    if (!sectorId) {
+      orbitFocusTo = 0
+      if (frozenOrbitElapsed !== null) {
+        orbitStarted = now - frozenOrbitElapsed
+        frozenOrbitElapsed = null
+      }
+      positionPlanets(now)
+      return
+    }
+
+    if (frozenOrbitElapsed === null) frozenOrbitElapsed = now - orbitStarted
+    const selected = [...sectorButtons].find((button) => button.dataset.sectorId === sectorId)
+    const orbit = Number(selected?.dataset.orbit ?? 0)
+    const phase = Number(selected?.dataset.phase ?? 0) * (Math.PI / 180)
+    const duration = Math.max(1, Number(selected?.dataset.duration ?? 1)) * 1000
+    const baseAngle = orbit > 0 ? phase + (frozenOrbitElapsed / duration) * Math.PI * 2 : 0
+    const focusAngle = -Math.PI / 2
+    orbitFocusTo =
+      orbit > 0 ? currentOffset + normalizeAngle(focusAngle - (baseAngle + currentOffset)) : 0
+    positionPlanets(now)
+  }
+
   const setSector = (sectorId: string | null, focusButton = false) => {
+    if ((root.dataset.selectedSector ?? null) !== sectorId) setOrbitFocus(sectorId)
     root.classList.toggle("is-sector-open", Boolean(sectorId))
     if (sectorId) root.dataset.selectedSector = sectorId
     else delete root.dataset.selectedSector
@@ -159,12 +200,11 @@ function setupGalaxyHome() {
       const orbit = Number(planet.dataset.orbit)
       const phase = Number(planet.dataset.phase) * (Math.PI / 180)
       const duration = Math.max(1, Number(planet.dataset.duration)) * 1000
-      const elapsed = reduceMotion ? 0 : timestamp - orbitStarted
-      const angle = phase + Math.sin((elapsed / duration) * Math.PI * 2) * 0.16
+      const elapsed = reduceMotion ? 0 : (frozenOrbitElapsed ?? timestamp - orbitStarted)
+      const angle = phase + (elapsed / duration) * Math.PI * 2 + orbitFocusOffset(timestamp)
       const compact = bounds.width < 700
-      const orbitWidth = bounds.width * (compact ? 0.22 + orbit * 0.092 : 0.13 + orbit * 0.09)
-      const radiusX = orbitWidth / 2
-      const radiusY = orbitWidth / (compact ? 2.56 : 4.6)
+      const radiusX = bounds.width * (compact ? 0.205 + orbit * 0.033 : 0.105 + orbit * 0.0525)
+      const radiusY = bounds.height * (compact ? 0.155 + orbit * 0.025 : 0.15 + orbit * 0.025)
       const x = bounds.width * 0.5 + Math.cos(angle) * radiusX
       const y = bounds.height * 0.51 + Math.sin(angle) * radiusY
 
@@ -202,12 +242,13 @@ function setupGalaxyHome() {
     cancelAnimationFrame(starFrame)
     cancelAnimationFrame(orbitFrame)
     if (document.hidden) {
-      orbitPausedAt = performance.now()
+      visibilityPausedAt = performance.now()
       return
     }
     if (!document.hidden && !reduceMotion) {
-      if (orbitPausedAt) orbitStarted += performance.now() - orbitPausedAt
-      orbitPausedAt = 0
+      if (visibilityPausedAt && frozenOrbitElapsed === null)
+        orbitStarted += performance.now() - visibilityPausedAt
+      visibilityPausedAt = 0
       starFrame = requestAnimationFrame(drawStars)
       orbitFrame = requestAnimationFrame(animatePlanets)
     }
