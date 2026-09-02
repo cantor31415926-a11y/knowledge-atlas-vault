@@ -15,7 +15,7 @@
     "quartz": "./quartz/bootstrap-cli.mjs",
     "docs": "npx quartz build --serve -d docs",
     "stage:content": "node scripts/stage-content.mjs",
-    "build:site": "node scripts/stage-content.mjs && node scripts/patch-graph-plugin.mjs && npx quartz build -d content.generated && node scripts/finalize-build.mjs && node scripts/audit-build.mjs",
+    "build:site": "node scripts/stage-content.mjs && node scripts/patch-graph-plugin.mjs && node ./quartz/bootstrap-cli.mjs build -d content.generated && node scripts/finalize-build.mjs && node scripts/audit-build.mjs",
     "test:privacy": "node --test scripts/stage-content.test.mjs",
     "verify:baseline": "node scripts/verify-baseline.mjs",
     "check": "tsc --noEmit && npx prettier . --check",
