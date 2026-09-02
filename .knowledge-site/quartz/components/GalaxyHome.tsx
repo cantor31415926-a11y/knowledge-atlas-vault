@@ -208,6 +208,7 @@ export default (() => {
                 key={`orbit-${planet.orbit}`}
                 class={`solar-orbit orbit-${planet.orbit}`}
                 style={{ "--orbit": planet.orbit }}
+                data-orbit={planet.orbit}
                 aria-hidden="true"
               />
             ))}

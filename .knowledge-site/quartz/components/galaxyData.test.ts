@@ -69,6 +69,12 @@ test("银河星域与当前 Vault 的全部非空顶层和二级目录一致", (
     planets.map((planet) => planet.orbit),
     planets.map((_, index) => index + 1),
   )
+  assert.equal(new Set(planets.map((planet) => planet.duration)).size, 1)
+  const phaseGaps = planets.map((planet, index) => {
+    const next = planets[(index + 1) % planets.length]
+    return ((next.phase - planet.phase + 360) % 360).toFixed(6)
+  })
+  assert.equal(new Set(phaseGaps).size, 1)
 
   for (const sector of sectors) {
     assert.ok(sector.count > 0)

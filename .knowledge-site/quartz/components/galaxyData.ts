@@ -178,14 +178,13 @@ export function buildGalaxySectors(files: GalaxyFile[]) {
     }
   })
 
-  const planets = sectors
-    .filter((sector) => !sector.isSun)
-    .map((sector, index) => ({
-      ...sector,
-      orbit: index + 1,
-      phase: (214 + index * 137) % 360,
-      duration: 44 + index * 13,
-    }))
+  const planetSectors = sectors.filter((sector) => !sector.isSun)
+  const planets = planetSectors.map((sector, index) => ({
+    ...sector,
+    orbit: index + 1,
+    phase: (205 + index * (360 / Math.max(1, planetSectors.length))) % 360,
+    duration: 72,
+  }))
   const sun = sectors.find((sector) => sector.isSun)
 
   return { sectors, sun, planets }

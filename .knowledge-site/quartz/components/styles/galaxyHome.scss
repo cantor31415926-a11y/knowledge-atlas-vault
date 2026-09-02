@@ -591,8 +591,9 @@ body[data-slug="index"] {
   position: absolute;
   top: 51%;
   left: 50%;
-  width: calc(13% + var(--orbit) * 9%);
-  aspect-ratio: 2.3 / 1;
+  width: var(--orbit-width, calc(13% + var(--orbit) * 9%));
+  height: var(--orbit-height, auto);
+  aspect-ratio: auto;
   transform: translate(-50%, -50%) rotate(-7deg);
   border: 1px solid rgba(111, 139, 161, 0.13);
   border-radius: 50%;
@@ -1445,8 +1446,9 @@ body[data-slug="index"] > .global-graph-outer.active {
     transform: scale(0.98);
   }
   .solar-orbit {
-    width: calc(22% + var(--orbit) * 9.2%);
-    aspect-ratio: 1.28 / 1;
+    width: var(--orbit-width, calc(22% + var(--orbit) * 9.2%));
+    height: var(--orbit-height, auto);
+    aspect-ratio: auto;
   }
   .celestial {
     min-width: 56px;

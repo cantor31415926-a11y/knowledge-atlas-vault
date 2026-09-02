@@ -18,6 +18,10 @@ function setupGalaxyHome() {
   const panel = root.querySelector<HTMLElement>("[data-galaxy-panel]")
   const orbitSystem = root.querySelector<HTMLElement>(".solar-orbits")
   const orbitalBodies = root.querySelectorAll<HTMLElement>(".planet[data-orbit]")
+  const orbitalTracks = root.querySelectorAll<HTMLElement>(".solar-orbit[data-orbit]")
+  const orbitalTrackByOrbit = new Map(
+    [...orbitalTracks].map((track) => [Number(track.dataset.orbit), track]),
+  )
   const graphOverlay = document.querySelector<HTMLElement>(".global-graph-outer")
   const graphOriginParent = graphOverlay?.parentElement ?? null
   const graphOriginNext = graphOverlay?.nextSibling ?? null
@@ -196,21 +200,37 @@ function setupGalaxyHome() {
     const bounds = orbitSystem.getBoundingClientRect()
     if (bounds.width === 0 || bounds.height === 0) return
 
+    const compact = bounds.width < 700
+    const orbitCount = Math.max(1, orbitalBodies.length)
+    const tilt = (-7 * Math.PI) / 180
+    const cosTilt = Math.cos(tilt)
+    const sinTilt = Math.sin(tilt)
+
     for (const planet of orbitalBodies) {
       const orbit = Number(planet.dataset.orbit)
       const phase = Number(planet.dataset.phase) * (Math.PI / 180)
       const duration = Math.max(1, Number(planet.dataset.duration)) * 1000
       const elapsed = reduceMotion ? 0 : (frozenOrbitElapsed ?? timestamp - orbitStarted)
       const angle = phase + (elapsed / duration) * Math.PI * 2 + orbitFocusOffset(timestamp)
-      const compact = bounds.width < 700
-      const radiusX = bounds.width * (compact ? 0.205 + orbit * 0.033 : 0.105 + orbit * 0.0525)
-      const radiusY = bounds.height * (compact ? 0.155 + orbit * 0.025 : 0.15 + orbit * 0.025)
-      const x = bounds.width * 0.5 + Math.cos(angle) * radiusX
-      const y = bounds.height * 0.51 + Math.sin(angle) * radiusY
+      const orbitProgress = orbitCount === 1 ? 0 : (orbit - 1) / (orbitCount - 1)
+      const minRadiusX = bounds.width * (compact ? 0.25 : 0.2)
+      const maxRadiusX = bounds.width * (compact ? 0.43 : 0.46)
+      const minRadiusY = bounds.height * (compact ? 0.22 : 0.26)
+      const maxRadiusY = bounds.height * (compact ? 0.43 : 0.46)
+      const radiusX = minRadiusX + (maxRadiusX - minRadiusX) * orbitProgress
+      const radiusY = minRadiusY + (maxRadiusY - minRadiusY) * orbitProgress
+      const ellipseX = Math.cos(angle) * radiusX
+      const ellipseY = Math.sin(angle) * radiusY
+      const x = bounds.width * 0.5 + ellipseX * cosTilt - ellipseY * sinTilt
+      const y = bounds.height * 0.51 + ellipseX * sinTilt + ellipseY * cosTilt
 
       planet.style.setProperty("--orbit-x", `${x}px`)
       planet.style.setProperty("--orbit-y", `${y}px`)
       planet.dataset.side = x < bounds.width * 0.5 ? "left" : "right"
+
+      const track = orbitalTrackByOrbit.get(orbit)
+      track?.style.setProperty("--orbit-width", `${radiusX * 2}px`)
+      track?.style.setProperty("--orbit-height", `${radiusY * 2}px`)
     }
   }
 
