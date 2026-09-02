@@ -2,42 +2,81 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
 import test from "node:test"
-import { FilePath, slugifyFilePath } from "../util/path"
-import { GALAXY_BODIES, GALAXY_CATEGORIES } from "./galaxyData"
+import { buildGalaxySectors, galaxyFolderHref, GalaxyFile } from "./galaxyData"
 import { formatBeijingTime } from "./galaxyTime"
 
-test("六个知识天体与六个真实顶层目录完全匹配", () => {
-  assert.equal(GALAXY_CATEGORIES.length, 6)
-  assert.equal(new Set(GALAXY_CATEGORIES.map((item) => item.folder)).size, 6)
-  for (const item of GALAXY_CATEGORIES) {
-    assert.equal(fs.statSync(path.join(process.cwd(), "..", item.folder)).isDirectory(), true)
-    assert.match(slugifyFilePath(item.folder as FilePath), /\S/)
+function markdownFiles(root: string, relativeRoot = ""): GalaxyFile[] {
+  const files: GalaxyFile[] = []
+  for (const entry of fs.readdirSync(path.join(root, relativeRoot), { withFileTypes: true })) {
+    if (entry.name.startsWith(".")) continue
+    const relativePath = path.join(relativeRoot, entry.name)
+    if (entry.isDirectory()) {
+      files.push(...markdownFiles(root, relativePath))
+    } else if (entry.isFile() && entry.name.toLowerCase().endsWith(".md")) {
+      files.push({ filePath: relativePath.replaceAll("\\", "/") })
+    }
   }
+  return files
+}
 
-  const activeFolders = new Set(GALAXY_BODIES.flatMap((body) => body.folder ?? []))
-  activeFolders.add("🌳 能力树搭建")
-  assert.deepEqual(activeFolders, new Set(GALAXY_CATEGORIES.map((item) => item.folder)))
-})
+test("按真实目录生成星域，数字前缀优先并过滤空目录", () => {
+  const files: GalaxyFile[] = [
+    { filePath: "20 项目/进行中/项目 A.md" },
+    { filePath: "00 收件箱/闪念.md" },
+    { filePath: "10 领域/销售/线索.md" },
+    { filePath: "10 领域/销售/成交.md" },
+    { filePath: "🌳 能力树搭建/英语/听力.md" },
+    { filePath: "根目录笔记.md" },
+    { filePath: ".trash/已删除.md" },
+  ]
 
-test("水星、天王星和海王星保持不可导航", () => {
-  const inactive = GALAXY_BODIES.filter((body) => !body.folder)
+  const { sectors, sun, planets } = buildGalaxySectors(files)
   assert.deepEqual(
-    inactive.map((body) => body.celestialName),
-    ["水星", "天王星", "海王星"],
+    sectors.map((sector) => sector.folder),
+    ["00 收件箱", "10 领域", "20 项目", "🌳 能力树搭建"],
+  )
+  assert.equal(sun?.folder, "🌳 能力树搭建")
+  assert.equal(planets.length, 3)
+  assert.deepEqual(
+    sectors
+      .find((sector) => sector.folder === "10 领域")
+      ?.children.map((child) => [child.name, child.count]),
+    [["销售", 2]],
+  )
+  assert.equal(
+    sectors.some((sector) => sector.folder === ".trash"),
+    false,
   )
 })
 
-test("八颗行星拥有唯一轨道和可用的运动参数", () => {
-  assert.deepEqual(
-    GALAXY_BODIES.map((body) => body.orbit),
-    [1, 2, 3, 4, 5, 6, 7, 8],
+test("银河星域与当前 Vault 的全部非空顶层和二级目录一致", () => {
+  const vaultRoot = path.resolve(process.cwd(), "..")
+  const files = markdownFiles(vaultRoot)
+  const { sectors, sun, planets } = buildGalaxySectors(files)
+  const expectedTopFolders = fs
+    .readdirSync(vaultRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .filter((entry) => files.some((file) => file.filePath?.startsWith(`${entry.name}/`)))
+    .map((entry) => entry.name)
+
+  assert.deepEqual(new Set(sectors.map((sector) => sector.folder)), new Set(expectedTopFolders))
+  assert.equal(
+    sectors.reduce((total, sector) => total + sector.count, 0),
+    files.filter((file) => String(file.filePath).includes("/")).length,
   )
-  for (const body of GALAXY_BODIES) {
-    assert.ok(body.phase >= 0 && body.phase < 360)
-    assert.ok(body.duration >= 20)
+  assert.equal(sun?.folder, "🌳 能力树搭建")
+  assert.deepEqual(
+    planets.map((planet) => planet.orbit),
+    planets.map((_, index) => index + 1),
+  )
+
+  for (const sector of sectors) {
+    assert.ok(sector.count > 0)
+    assert.match(galaxyFolderHref(sector.folder), /^\.\/.+\/$/)
+    for (const child of sector.children) assert.ok(child.count > 0)
   }
 })
 
-test("北京时间格式不受本地时区影响", () => {
+test("北京时间格式不受访问者本地时区影响", () => {
   assert.equal(formatBeijingTime(new Date("2026-08-30T00:04:05.000Z")), "2026.08.30 / 08:04:05")
 })

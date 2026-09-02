@@ -1,129 +1,192 @@
-export type GalaxyCategory = {
-  order: string
-  celestialName: string
-  category: string
-  folder: string
+import { FilePath, slugifyFilePath } from "../util/path"
+
+export type GalaxyFile = {
+  filePath?: string
+  slug?: string
 }
 
-export type GalaxyBody = {
-  key: string
+export type GalaxyChildFolder = {
+  id: string
+  name: string
+  folder: string
+  count: number
+}
+
+export type GalaxySector = {
+  id: string
+  order: string
   celestialName: string
-  category: string
-  folder?: string
+  visualKey: string
+  folder: string
+  count: number
+  children: GalaxyChildFolder[]
   orbit: number
   phase: number
   duration: number
-  x: number
-  y: number
+  size: number
+  isSun: boolean
+}
+
+type VisualPreset = {
+  key: string
+  celestialName: string
   size: number
 }
 
-export const GALAXY_CATEGORIES: GalaxyCategory[] = [
-  { order: "01", celestialName: "地球", category: "个人思考", folder: "✨ 个人思考" },
-  { order: "02", celestialName: "土星", category: "专业领域", folder: "📚 专业领域" },
-  { order: "03", celestialName: "太阳", category: "能力树", folder: "🌳 能力树搭建" },
-  { order: "04", celestialName: "火星", category: "日常学习", folder: "📅 日常学习" },
-  { order: "05", celestialName: "木星", category: "日常记录", folder: "📝 日常记录" },
-  {
-    order: "06",
-    celestialName: "金星",
-    category: "AI学习和实操",
-    folder: "🤖 AI 学习&实操",
-  },
+const PREFERRED_FOLDER_ORDER = [
+  "✨ 个人思考",
+  "📚 专业领域",
+  "🌳 能力树搭建",
+  "📅 日常学习",
+  "📝 日常记录",
+  "🤖 AI 学习&实操",
+  "📖 读书日志",
+  "📎 附件",
 ]
 
-export const GALAXY_BODIES: GalaxyBody[] = [
-  {
-    key: "mercury",
-    celestialName: "水星",
-    category: "待拓展",
-    orbit: 1,
-    phase: 218,
-    duration: 30,
-    x: 43,
-    y: 33,
-    size: 12,
-  },
-  {
-    key: "venus",
-    celestialName: "金星",
-    category: "06. AI学习和实操",
-    folder: "🤖 AI 学习&实操",
-    orbit: 2,
-    phase: 326,
-    duration: 38,
-    x: 57,
-    y: 38,
-    size: 19,
-  },
-  {
-    key: "earth",
-    celestialName: "地球",
-    category: "01. 个人思考",
-    folder: "✨ 个人思考",
-    orbit: 3,
-    phase: 148,
-    duration: 48,
-    x: 31,
-    y: 60,
-    size: 22,
-  },
-  {
-    key: "mars",
-    celestialName: "火星",
-    category: "04. 日常学习",
-    folder: "📅 日常学习",
-    orbit: 4,
-    phase: 28,
-    duration: 58,
-    x: 64,
-    y: 62,
-    size: 17,
-  },
-  {
-    key: "jupiter",
-    celestialName: "木星",
-    category: "05. 日常记录",
-    folder: "📝 日常记录",
-    orbit: 5,
-    phase: 202,
-    duration: 76,
-    x: 25,
-    y: 34,
-    size: 42,
-  },
-  {
-    key: "saturn",
-    celestialName: "土星",
-    category: "02. 专业领域",
-    folder: "📚 专业领域",
-    orbit: 6,
-    phase: 322,
-    duration: 92,
-    x: 77,
-    y: 30,
-    size: 36,
-  },
-  {
-    key: "uranus",
-    celestialName: "天王星",
-    category: "待拓展",
-    orbit: 7,
-    phase: 156,
-    duration: 112,
-    x: 20,
-    y: 72,
-    size: 28,
-  },
-  {
-    key: "neptune",
-    celestialName: "海王星",
-    category: "待拓展",
-    orbit: 8,
-    phase: 24,
-    duration: 132,
-    x: 81,
-    y: 73,
-    size: 26,
-  },
+const PLANET_PRESETS: VisualPreset[] = [
+  { key: "earth", celestialName: "地球", size: 30 },
+  { key: "jupiter", celestialName: "木星", size: 48 },
+  { key: "mars", celestialName: "火星", size: 24 },
+  { key: "saturn", celestialName: "土星", size: 42 },
+  { key: "uranus", celestialName: "天王星", size: 32 },
+  { key: "venus", celestialName: "金星", size: 28 },
+  { key: "mercury", celestialName: "水星", size: 21 },
+  { key: "neptune", celestialName: "海王星", size: 34 },
 ]
+
+const FOLDER_PRESETS: Array<[RegExp, VisualPreset]> = [
+  [/个人|思考/i, PLANET_PRESETS[0]],
+  [/专业|领域/i, PLANET_PRESETS[1]],
+  [/日常学习|学习日志/i, PLANET_PRESETS[2]],
+  [/日常记录|记录/i, PLANET_PRESETS[3]],
+  [/\bAI\b|人工智能|实操/i, PLANET_PRESETS[4]],
+  [/读书|阅读/i, PLANET_PRESETS[5]],
+  [/附件|资源|素材/i, PLANET_PRESETS[6]],
+]
+
+function numericPrefix(name: string) {
+  const match = name.match(/^(\d{2})(?=[.\s_-]|$)/)
+  return match ? Number(match[1]) : null
+}
+
+function compareFolderNames(left: string, right: string) {
+  const leftNumber = numericPrefix(left)
+  const rightNumber = numericPrefix(right)
+  if (leftNumber !== null || rightNumber !== null) {
+    if (leftNumber === null) return 1
+    if (rightNumber === null) return -1
+    if (leftNumber !== rightNumber) return leftNumber - rightNumber
+  }
+
+  const leftPreferred = PREFERRED_FOLDER_ORDER.indexOf(left)
+  const rightPreferred = PREFERRED_FOLDER_ORDER.indexOf(right)
+  if (leftPreferred !== -1 || rightPreferred !== -1) {
+    if (leftPreferred === -1) return 1
+    if (rightPreferred === -1) return -1
+    if (leftPreferred !== rightPreferred) return leftPreferred - rightPreferred
+  }
+
+  return left.localeCompare(right, "zh-CN", { numeric: true, sensitivity: "base" })
+}
+
+function fileSegments(file: GalaxyFile) {
+  const raw = String(file.filePath ?? "").replaceAll("\\", "/")
+  if (!raw.toLowerCase().endsWith(".md")) return []
+
+  let parts = raw.split("/").filter(Boolean)
+  const generatedRoot = parts.lastIndexOf("content.generated")
+  const contentRoot = parts.lastIndexOf("content")
+  const rootIndex = Math.max(generatedRoot, contentRoot)
+  if (rootIndex >= 0) parts = parts.slice(rootIndex + 1)
+  return parts
+}
+
+function presetFor(folder: string, fallbackIndex: number) {
+  return (
+    FOLDER_PRESETS.find(([pattern]) => pattern.test(folder))?.[1] ??
+    PLANET_PRESETS[fallbackIndex % PLANET_PRESETS.length]
+  )
+}
+
+export function galaxyFolderHref(folder: string) {
+  return `./${slugifyFilePath(folder as FilePath)}/`
+}
+
+export function buildGalaxySectors(files: GalaxyFile[]) {
+  const folders = new Map<string, { count: number; children: Map<string, number> }>()
+
+  for (const file of files) {
+    const parts = fileSegments(file)
+    if (parts.length < 2) continue
+    const top = parts[0]
+    if (!top || top.startsWith(".") || top === "tags") continue
+
+    const entry = folders.get(top) ?? { count: 0, children: new Map<string, number>() }
+    entry.count += 1
+    if (parts.length > 2) {
+      const child = parts[1]
+      entry.children.set(child, (entry.children.get(child) ?? 0) + 1)
+    }
+    folders.set(top, entry)
+  }
+
+  const orderedFolders = [...folders.entries()]
+    .filter(([, entry]) => entry.count > 0)
+    .sort(([left], [right]) => compareFolderNames(left, right))
+
+  const sunFolder =
+    orderedFolders.find(([folder]) => /能力树|knowledge\s*tree|核心/i.test(folder))?.[0] ??
+    orderedFolders.reduce<string | undefined>(
+      (current, [folder, entry]) =>
+        !current || entry.count > (folders.get(current)?.count ?? 0) ? folder : current,
+      undefined,
+    )
+
+  let planetIndex = 0
+  const sectors = orderedFolders.map<GalaxySector>(([folder, entry], index) => {
+    const isSun = folder === sunFolder
+    const preset = isSun
+      ? { key: "sun", celestialName: "太阳", size: 154 }
+      : presetFor(folder, planetIndex++)
+    const prefix = numericPrefix(folder)
+    const order =
+      prefix === null ? String(index + 1).padStart(2, "0") : String(prefix).padStart(2, "0")
+    const children = [...entry.children.entries()]
+      .filter(([, count]) => count > 0)
+      .sort(([left], [right]) => compareFolderNames(left, right))
+      .map(([name, count]) => ({
+        id: slugifyFilePath(`${folder}/${name}` as FilePath),
+        name,
+        folder: `${folder}/${name}`,
+        count,
+      }))
+
+    return {
+      id: slugifyFilePath(folder as FilePath),
+      order,
+      celestialName: preset.celestialName,
+      visualKey: preset.key,
+      folder,
+      count: entry.count,
+      children,
+      orbit: 0,
+      phase: 0,
+      duration: 0,
+      size: isSun ? preset.size : Math.min(58, preset.size + Math.log2(entry.count + 1) * 1.7),
+      isSun,
+    }
+  })
+
+  const planets = sectors
+    .filter((sector) => !sector.isSun)
+    .map((sector, index) => ({
+      ...sector,
+      orbit: index + 1,
+      phase: (214 + index * 137) % 360,
+      duration: 44 + index * 13,
+    }))
+  const sun = sectors.find((sector) => sector.isSun)
+
+  return { sectors, sun, planets }
+}

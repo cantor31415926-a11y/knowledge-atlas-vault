@@ -22,9 +22,10 @@ function setupGalaxyHome() {
   const graphOriginParent = graphOverlay?.parentElement ?? null
   const graphOriginNext = graphOverlay?.nextSibling ?? null
   const panelCloseActions = root.querySelectorAll<HTMLButtonElement>("[data-galaxy-drawer-close]")
-  const planets = root.querySelectorAll<HTMLAnchorElement>(".celestial[data-active='true']")
+  const sectorButtons = root.querySelectorAll<HTMLButtonElement>("[data-sector-button]")
+  const sectorPanels = root.querySelectorAll<HTMLElement>("[data-sector-panel]")
+  const sectorCloseActions = root.querySelectorAll<HTMLButtonElement>("[data-sector-close]")
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  const touchLayout = window.matchMedia("(hover: none), (pointer: coarse)")
   let starFrame = 0
   let orbitFrame = 0
   let clockTimer = 0
@@ -33,11 +34,34 @@ function setupGalaxyHome() {
   let orbitPausedAt = 0
   let graphObserver: MutationObserver | null = null
   let graphMotionTimer = 0
+  let sectorActivationTimer = 0
+  let lastSectorButton: HTMLButtonElement | null = null
   let graphMotionCleanup: (() => void) | null = null
   let graphFitTimers: number[] = []
   let particles: Array<{ x: number; y: number; radius: number; alpha: number; speed: number }> = []
 
+  const setSector = (sectorId: string | null, focusButton = false) => {
+    root.classList.toggle("is-sector-open", Boolean(sectorId))
+    if (sectorId) root.dataset.selectedSector = sectorId
+    else delete root.dataset.selectedSector
+
+    for (const button of sectorButtons) {
+      const selected = button.dataset.sectorId === sectorId
+      button.classList.toggle("is-selected", selected)
+      button.setAttribute("aria-expanded", String(selected))
+      if (selected && focusButton) button.focus({ preventScroll: true })
+    }
+
+    for (const sectorPanel of sectorPanels) {
+      const selected = sectorPanel.dataset.sectorPanel === sectorId
+      sectorPanel.classList.toggle("is-active", selected)
+      sectorPanel.setAttribute("aria-hidden", String(!selected))
+      sectorPanel.inert = !selected
+    }
+  }
+
   const setDirectory = (open: boolean) => {
+    if (open) setSector(null)
     root.classList.toggle("is-directory-open", open)
     panel?.setAttribute("aria-hidden", String(!open))
     if (panel) panel.inert = !open
@@ -52,6 +76,7 @@ function setupGalaxyHome() {
   }
 
   const setScene = (entered: boolean) => {
+    setSector(null)
     root.classList.toggle("is-entered", entered)
     intro?.setAttribute("aria-hidden", String(entered))
     solar?.setAttribute("aria-hidden", String(!entered))
@@ -135,10 +160,11 @@ function setupGalaxyHome() {
       const phase = Number(planet.dataset.phase) * (Math.PI / 180)
       const duration = Math.max(1, Number(planet.dataset.duration)) * 1000
       const elapsed = reduceMotion ? 0 : timestamp - orbitStarted
-      const angle = phase + (elapsed / duration) * Math.PI * 2
-      const orbitWidth = bounds.width * (0.13 + orbit * 0.09)
+      const angle = phase + Math.sin((elapsed / duration) * Math.PI * 2) * 0.16
+      const compact = bounds.width < 700
+      const orbitWidth = bounds.width * (compact ? 0.22 + orbit * 0.092 : 0.13 + orbit * 0.09)
       const radiusX = orbitWidth / 2
-      const radiusY = orbitWidth / 4.6
+      const radiusY = orbitWidth / (compact ? 2.56 : 4.6)
       const x = bounds.width * 0.5 + Math.cos(angle) * radiusX
       const y = bounds.height * 0.51 + Math.sin(angle) * radiusY
 
@@ -278,20 +304,37 @@ function setupGalaxyHome() {
     }, 0)
   }
   const handleCloseDirectory = () => setDirectory(false)
+  const closeSector = () => {
+    setSector(null)
+    lastSectorButton?.focus({ preventScroll: true })
+  }
+  const handleSectorClose = () => closeSector()
   const handleKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && root.classList.contains("is-directory-open")) {
       event.preventDefault()
       setDirectory(false)
+    } else if (event.key === "Escape" && root.classList.contains("is-sector-open")) {
+      event.preventDefault()
+      closeSector()
     }
   }
-  const handlePlanetTap = (event: MouseEvent) => {
-    if (!touchLayout.matches) return
-    const planet = event.currentTarget as HTMLAnchorElement
-    if (planet.classList.contains("is-peeked")) return
-    event.preventDefault()
-    for (const item of planets) item.classList.remove("is-peeked")
-    planet.classList.add("is-peeked")
-    planet.focus({ preventScroll: true })
+  const handleSectorSelect = (event: MouseEvent) => {
+    const button = event.currentTarget as HTMLButtonElement
+    const sectorId = button.dataset.sectorId
+    if (!sectorId) return
+    lastSectorButton = button
+
+    const alreadySelected = button.classList.contains("is-selected")
+    window.clearTimeout(sectorActivationTimer)
+    for (const sectorButton of sectorButtons) sectorButton.classList.remove("is-activating")
+    if (alreadySelected) {
+      setSector(null)
+      return
+    }
+
+    button.classList.add("is-activating")
+    setSector(sectorId)
+    sectorActivationTimer = window.setTimeout(() => button.classList.remove("is-activating"), 900)
   }
 
   setScene(sessionStorage.getItem(SESSION_KEY) === "1")
@@ -314,7 +357,8 @@ function setupGalaxyHome() {
   directoryAction?.addEventListener("click", handleDirectory)
   graphAction?.addEventListener("click", handleGraph)
   for (const action of panelCloseActions) action.addEventListener("click", handleCloseDirectory)
-  for (const planet of planets) planet.addEventListener("click", handlePlanetTap)
+  for (const button of sectorButtons) button.addEventListener("click", handleSectorSelect)
+  for (const action of sectorCloseActions) action.addEventListener("click", handleSectorClose)
   document.addEventListener("keydown", handleKeydown)
   window.addEventListener("resize", handleResize)
   document.addEventListener("visibilitychange", handleVisibility)
@@ -333,6 +377,7 @@ function setupGalaxyHome() {
     clearInterval(clockTimer)
     clearGraphFitTimers()
     window.clearTimeout(graphMotionTimer)
+    window.clearTimeout(sectorActivationTimer)
     graphMotionCleanup?.()
     graphObserver?.disconnect()
     enter?.removeEventListener("click", handleEnter)
@@ -342,7 +387,8 @@ function setupGalaxyHome() {
     graphAction?.removeEventListener("click", handleGraph)
     for (const action of panelCloseActions)
       action.removeEventListener("click", handleCloseDirectory)
-    for (const planet of planets) planet.removeEventListener("click", handlePlanetTap)
+    for (const button of sectorButtons) button.removeEventListener("click", handleSectorSelect)
+    for (const action of sectorCloseActions) action.removeEventListener("click", handleSectorClose)
     document.removeEventListener("keydown", handleKeydown)
     window.removeEventListener("resize", handleResize)
     document.removeEventListener("visibilitychange", handleVisibility)
