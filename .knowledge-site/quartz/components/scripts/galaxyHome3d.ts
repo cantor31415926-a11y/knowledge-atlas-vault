@@ -209,11 +209,20 @@ const ACCRETION_FRAGMENT_SHADER = `
 `
 
 const JET_VERTEX_SHADER = `
+  uniform float uTime;
   varying vec2 vUv;
+  varying float vRim;
 
   void main() {
     vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vec3 p = position;
+    float distanceFromCore = (position.y + 24.0) / 48.0;
+    float ripple = sin(position.y * 0.52 - uTime * 1.3 + uv.x * 12.566);
+    p.xz *= 1.0 + ripple * 0.14;
+    p.x += sin(position.y * 0.26 - uTime * 0.55) * distanceFromCore * 0.5;
+    vec4 viewPosition = modelViewMatrix * vec4(p, 1.0);
+    vRim = abs(dot(normalize(normalMatrix * normal), normalize(-viewPosition.xyz)));
+    gl_Position = projectionMatrix * viewPosition;
   }
 `
 
@@ -221,17 +230,19 @@ const JET_FRAGMENT_SHADER = `
   uniform float uTime;
   uniform float uOpacity;
   varying vec2 vUv;
+  varying float vRim;
 
   void main() {
     float lengthFade = smoothstep(0.0, 0.13, vUv.y) * (1.0 - smoothstep(0.68, 1.0, vUv.y));
-    float braid = pow(abs(sin(vUv.x * 38.0 + vUv.y * 17.0 - uTime * 4.8)), 9.0);
-    float pulse = 0.5 + 0.5 * sin(vUv.y * 54.0 - uTime * 7.0);
+    float braid = pow(0.5 + 0.5 * sin(vUv.x * 37.699 + vUv.y * 13.0 - uTime * 1.8), 12.0);
+    float pulse = 0.5 + 0.5 * sin(vUv.y * 22.0 - uTime * 2.2);
     vec3 blue = vec3(0.04, 0.29, 1.0);
     vec3 cyan = vec3(0.18, 0.82, 1.0);
     vec3 whiteHot = vec3(0.9, 0.97, 1.0);
     vec3 color = mix(blue, cyan, vUv.y);
     color = mix(color, whiteHot, braid * 0.35 + pulse * 0.08);
-    float alpha = lengthFade * (0.045 + braid * 0.2 + pulse * 0.055) * uOpacity;
+    float alpha = lengthFade * smoothstep(0.05, 0.55, vRim)
+      * (0.008 + braid * 0.09) * (0.75 + pulse * 0.25) * uOpacity;
     gl_FragColor = vec4(color, alpha);
   }
 `
@@ -241,31 +252,102 @@ const JET_PARTICLE_VERTEX_SHADER = `
   uniform float uOpacity;
   attribute float aSeed;
   attribute float aSide;
+  attribute float aLength;
+  varying vec2 vUv;
   varying float vAlpha;
   varying vec3 vColor;
 
+  vec3 path(float travel) {
+    float radius = (0.10 + travel * 0.052) * (0.25 + aSeed * 0.75);
+    float angle = aSeed * 31.4159 + travel * 0.48 - uTime * 0.35;
+    return vec3(cos(angle) * radius + sin(travel * 0.27 - uTime * 0.55) * travel * 0.01,
+      aSide * (2.8 + travel), sin(angle) * radius);
+  }
+
   void main() {
-    float speed = 4.0 + aSeed * 4.2;
-    float travel = mod(position.y + uTime * speed, 48.0);
-    float radius = (0.08 + travel * 0.052) * (0.22 + aSeed * 0.82);
-    float angle = aSeed * 31.4159 + travel * 0.38 + uTime * 0.7;
-    vec3 transformed = vec3(cos(angle) * radius, aSide * (2.8 + travel), sin(angle) * radius);
-    vec4 modelViewPosition = modelViewMatrix * vec4(transformed, 1.0);
-    gl_Position = projectionMatrix * modelViewPosition;
-    gl_PointSize = (1.4 + aSeed * 2.6) * clamp(260.0 / -modelViewPosition.z, 0.8, 3.8);
-    vAlpha = smoothstep(0.0, 3.4, travel) * (1.0 - smoothstep(37.0, 48.0, travel)) * uOpacity;
-    vColor = mix(vec3(0.025, 0.18, 1.0), vec3(0.36, 0.72, 1.0), aSeed);
+    vUv = uv;
+    float head = mod(position.y + uTime * (4.0 + aSeed * 4.2), 48.0);
+    float travel = max(0.0, head - (1.0 - uv.y) * aLength);
+    vec4 viewPosition = modelViewMatrix * vec4(path(travel), 1.0);
+    vec4 nextPosition = modelViewMatrix * vec4(path(travel + 0.08), 1.0);
+    vec2 direction = normalize(nextPosition.xy - viewPosition.xy + vec2(0.00001));
+    vec2 across = vec2(-direction.y, direction.x);
+    viewPosition.xy += across * (uv.x - 0.5) * (0.035 + aSeed * 0.065);
+    gl_Position = projectionMatrix * viewPosition;
+    vAlpha = smoothstep(0.0, aLength + 1.0, head)
+      * (1.0 - smoothstep(36.0, 48.0, head)) * uOpacity;
+    vColor = mix(vec3(0.03, 0.20, 0.85), vec3(0.55, 0.86, 1.0), aSeed);
   }
 `
 
 const JET_PARTICLE_FRAGMENT_SHADER = `
+  varying vec2 vUv;
   varying float vAlpha;
   varying vec3 vColor;
 
   void main() {
-    vec2 point = gl_PointCoord - 0.5;
-    float glow = 1.0 - smoothstep(0.02, 0.5, length(point));
-    gl_FragColor = vec4(vColor, glow * vAlpha * 0.58);
+    float edge = 1.0 - smoothstep(0.08, 0.5, abs(vUv.x - 0.5));
+    float tail = smoothstep(0.0, 0.6, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
+    gl_FragColor = vec4(vColor, edge * tail * vAlpha * 0.72);
+  }
+`
+
+const STAR_VERTEX_SHADER = `
+  uniform float uTime;
+  uniform float uOpacity;
+  uniform float uPixelRatio;
+  attribute float aSeed;
+  varying vec3 vColor;
+  varying float vAlpha;
+  void main() {
+    vec4 p = modelViewMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * p;
+    gl_PointSize = clamp((0.7 + aSeed * 1.5) * 65.0 / max(12.0, -p.z), 0.8, 3.3) * uPixelRatio;
+    float twinkle = aSeed > 0.86 ? 0.8 + 0.2 * sin(uTime * 0.7 + aSeed * 100.0) : 1.0;
+    vAlpha = uOpacity * twinkle;
+    vColor = mix(vec3(0.3, 0.5, 0.9), vec3(0.9, 0.86, 0.76), aSeed);
+  }
+`
+
+const STAR_FRAGMENT_SHADER = `
+  varying vec3 vColor;
+  varying float vAlpha;
+  void main() {
+    float r = length(gl_PointCoord - 0.5);
+    float alpha = (1.0 - smoothstep(0.05, 0.5, r)) * vAlpha;
+    gl_FragColor = vec4(vColor, alpha);
+  }
+`
+
+const NEBULA_FRAGMENT_SHADER = `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec2 vUv;
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float noise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x),
+      mix(hash(i + vec2(0, 1)), hash(i + vec2(1)), f.x), f.y);
+  }
+  float cloud(vec2 p) {
+    return noise(p) * 0.57 + noise(p * 2.03) * 0.28 + noise(p * 4.11) * 0.15;
+  }
+  void main() {
+    vec2 p = vUv * vec2(5.5, 3.0) + vec2(uTime * 0.007, -uTime * 0.004);
+    float density = cloud(p + cloud(p * 1.3) * 2.1);
+    float filaments = pow(cloud(p * 3.0 + density), 3.0);
+    float edge = 1.0 - smoothstep(0.25, 0.64, length((vUv - 0.5) * vec2(0.8, 1.3)));
+    float rightCloud = exp(-dot((vUv - vec2(0.82, 0.63)) * vec2(2.1, 2.8),
+      (vUv - vec2(0.82, 0.63)) * vec2(2.1, 2.8)));
+    float lowerCloud = exp(-dot((vUv - vec2(0.18, 0.12)) * vec2(3.0, 4.0),
+      (vUv - vec2(0.18, 0.12)) * vec2(3.0, 4.0)));
+    float coreClear = smoothstep(0.06, 0.27, length(vUv - 0.5));
+    vec3 color = mix(vec3(0.09, 0.11, 0.39), vec3(0.12, 0.34, 0.63), density);
+    color = mix(color, vec3(0.29, 0.12, 0.45), cloud(p + 12.0) * 0.65);
+    float alpha = (rightCloud + lowerCloud * 0.7) * edge * coreClear
+      * (smoothstep(0.3, 0.8, density) * 0.24 + filaments * 0.24) * uOpacity;
+    gl_FragColor = vec4(color, alpha);
   }
 `
 
@@ -319,6 +401,7 @@ function createGalaxy(pointCount: number) {
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3))
   const material = new THREE.PointsMaterial({
     size: 0.13,
+    map: createStarSprite(),
     sizeAttenuation: true,
     transparent: true,
     opacity: 0.86,
@@ -332,6 +415,7 @@ function createGalaxy(pointCount: number) {
 function createStarField(pointCount: number) {
   const random = seededRandom(271828)
   const positions = new Float32Array(pointCount * 3)
+  const seeds = new Float32Array(pointCount)
   for (let index = 0; index < pointCount; index++) {
     const offset = index * 3
     const radius = 48 + random() * 86
@@ -340,18 +424,71 @@ function createStarField(pointCount: number) {
     positions[offset] = radius * Math.sin(polar) * Math.cos(azimuth)
     positions[offset + 1] = radius * Math.cos(polar)
     positions[offset + 2] = radius * Math.sin(polar) * Math.sin(azimuth)
+    seeds[index] = random()
   }
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
-  const material = new THREE.PointsMaterial({
-    color: "#b7dcff",
-    size: 0.12,
+  geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1))
+  const material = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uOpacity: { value: 0.72 }, uPixelRatio: { value: 1 } },
+    vertexShader: STAR_VERTEX_SHADER,
+    fragmentShader: STAR_FRAGMENT_SHADER,
     transparent: true,
-    opacity: 0.72,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   })
   return new THREE.Points(geometry, material)
+}
+
+function createStarSprite() {
+  const size = 32
+  const pixels = new Uint8Array(size * size * 4)
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const radius = Math.hypot((x + 0.5) / size - 0.5, (y + 0.5) / size - 0.5)
+      const offset = (y * size + x) * 4
+      pixels[offset] = pixels[offset + 1] = pixels[offset + 2] = 255
+      pixels[offset + 3] = Math.round(255 * (1 - THREE.MathUtils.smoothstep(radius, 0.02, 0.5)))
+    }
+  }
+  const texture = new THREE.DataTexture(pixels, size, size)
+  texture.magFilter = texture.minFilter = THREE.LinearFilter
+  texture.needsUpdate = true
+  return texture
+}
+
+function createDeepSpace(compact: boolean) {
+  const group = new THREE.Group()
+  const material = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uOpacity: { value: 1 } },
+    vertexShader: ACCRETION_VERTEX_SHADER,
+    fragmentShader: NEBULA_FRAGMENT_SHADER,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  })
+  const nebula = new THREE.Mesh(new THREE.PlaneGeometry(230, 145), material)
+  nebula.position.set(0, 0, -65)
+  nebula.renderOrder = -2
+  group.add(nebula)
+
+  const dust = createStarField(compact ? 70 : 160)
+  // A separate foreground layer produces parallax without crowding the core.
+  dust.scale.set(0.55, 0.3, 0.22)
+  dust.position.z = 18
+  group.add(dust)
+  return {
+    group,
+    update(time: number, opacity: number, pixelRatio: number) {
+      group.visible = opacity > 0.015
+      material.uniforms.uTime.value = time
+      material.uniforms.uOpacity.value = opacity
+      dust.material.uniforms.uTime.value = time
+      dust.material.uniforms.uOpacity.value = opacity * 0.3
+      dust.material.uniforms.uPixelRatio.value = pixelRatio
+      dust.rotation.y = Math.sin(time * 0.018) * 0.025
+    },
+  }
 }
 
 function createBlackHole(compact: boolean): BlackHoleSystem {
@@ -420,31 +557,53 @@ function createBlackHole(compact: boolean): BlackHoleSystem {
     blending: THREE.AdditiveBlending,
   })
   const upperJet = new THREE.Mesh(
-    new THREE.CylinderGeometry(3.6, 0.1, 48, compact ? 28 : 44, 1, true),
+    new THREE.CylinderGeometry(3.6, 0.1, 48, compact ? 24 : 36, compact ? 24 : 40, true),
     jetMaterial,
   )
   upperJet.position.y = 26.3
-  const lowerJet = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 3.6, 48, compact ? 28 : 44, 1, true),
-    jetMaterial,
-  )
+  const lowerJet = new THREE.Mesh(upperJet.geometry, jetMaterial)
   lowerJet.position.y = -26.3
+  lowerJet.rotation.z = Math.PI
   group.add(upperJet, lowerJet)
 
-  const particleCount = compact ? 520 : 1100
-  const particlePositions = new Float32Array(particleCount * 3)
-  const particleSeeds = new Float32Array(particleCount)
-  const particleSides = new Float32Array(particleCount)
+  const particleCount = compact ? 140 : 320
+  const segments = 8
+  const verticesPerTrail = (segments + 1) * 2
+  const vertexCount = particleCount * verticesPerTrail
+  const particlePositions = new Float32Array(vertexCount * 3)
+  const particleSeeds = new Float32Array(vertexCount)
+  const particleSides = new Float32Array(vertexCount)
+  const particleLengths = new Float32Array(vertexCount)
+  const particleUvs = new Float32Array(vertexCount * 2)
+  const indices: number[] = []
   const random = seededRandom(141421)
   for (let index = 0; index < particleCount; index++) {
-    particlePositions[index * 3 + 1] = random() * 48
-    particleSeeds[index] = random()
-    particleSides[index] = index % 2 === 0 ? 1 : -1
+    const travel = random() * 48
+    const seed = random()
+    const length = index < (compact ? 12 : 24) ? 8 + seed * 6 : 0.7 + seed * 1.8
+    for (let segment = 0; segment <= segments; segment++) {
+      for (let edge = 0; edge < 2; edge++) {
+        const vertex = index * verticesPerTrail + segment * 2 + edge
+        particlePositions[vertex * 3 + 1] = travel
+        particleSeeds[vertex] = seed
+        particleSides[vertex] = index % 2 === 0 ? 1 : -1
+        particleLengths[vertex] = length
+        particleUvs[vertex * 2] = edge
+        particleUvs[vertex * 2 + 1] = segment / segments
+      }
+      if (segment < segments) {
+        const start = index * verticesPerTrail + segment * 2
+        indices.push(start, start + 1, start + 2, start + 1, start + 3, start + 2)
+      }
+    }
   }
   const particleGeometry = new THREE.BufferGeometry()
   particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3))
   particleGeometry.setAttribute("aSeed", new THREE.BufferAttribute(particleSeeds, 1))
   particleGeometry.setAttribute("aSide", new THREE.BufferAttribute(particleSides, 1))
+  particleGeometry.setAttribute("aLength", new THREE.BufferAttribute(particleLengths, 1))
+  particleGeometry.setAttribute("uv", new THREE.BufferAttribute(particleUvs, 2))
+  particleGeometry.setIndex(indices)
   const particleMaterial = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -452,11 +611,12 @@ function createBlackHole(compact: boolean): BlackHoleSystem {
     },
     vertexShader: JET_PARTICLE_VERTEX_SHADER,
     fragmentShader: JET_PARTICLE_FRAGMENT_SHADER,
+    side: THREE.DoubleSide,
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   })
-  const jetParticles = new THREE.Points(particleGeometry, particleMaterial)
+  const jetParticles = new THREE.Mesh(particleGeometry, particleMaterial)
   jetParticles.frustumCulled = false
   group.add(jetParticles)
 
@@ -475,7 +635,6 @@ function createBlackHole(compact: boolean): BlackHoleSystem {
       lensHalo.material.uniforms.uOpacity.value = 0.42 * opacity
       accretionDisk.rotation.z = time * 0.11
       photonRing.rotation.z = Math.sin(time * 0.32) * 0.035
-      jetParticles.rotation.y = time * 0.035
     },
   }
 }
@@ -755,7 +914,10 @@ export function mountGalaxyHome3D(root: HTMLElement): GalaxyHome3D {
   scene.add(galaxyGroup)
   const galaxy = createGalaxy(compact ? 2600 : 6200)
   galaxyGroup.add(galaxy.points)
-  galaxyGroup.add(createStarField(compact ? 650 : 1400))
+  const stars = createStarField(compact ? 650 : 1400)
+  galaxyGroup.add(stars)
+  const deepSpace = createDeepSpace(compact)
+  scene.add(deepSpace.group)
   const blackHole = createBlackHole(compact)
   galaxyGroup.add(blackHole.group)
 
@@ -808,6 +970,7 @@ export function mountGalaxyHome3D(root: HTMLElement): GalaxyHome3D {
   let selectedId: string | null = null
   let orbitElapsed = 0
   let lastFrame = performance.now()
+  const animationStarted = lastFrame
   let frame = 0
   let cameraTween: CameraTween | null = null
   let solarScale = 1
@@ -967,10 +1130,14 @@ export function mountGalaxyHome3D(root: HTMLElement): GalaxyHome3D {
 
   function updateSceneMix(now = performance.now()) {
     const introOpacity = 1 - THREE.MathUtils.smoothstep(sceneMix, 0.08, 0.9)
+    const time = reduceMotion ? 0 : (now - animationStarted) * 0.001
     galaxy.material.opacity = THREE.MathUtils.lerp(0.86, 0.16, sceneMix)
-    blackHole.update(reduceMotion ? 0 : now * 0.001, introOpacity)
+    blackHole.update(time, introOpacity)
+    stars.material.uniforms.uTime.value = time
+    stars.material.uniforms.uPixelRatio.value = renderer.getPixelRatio()
+    deepSpace.update(time, introOpacity, renderer.getPixelRatio())
     galaxyGroup.scale.setScalar(THREE.MathUtils.lerp(1, 2.05, sceneMix))
-    galaxyGroup.rotation.y += reduceMotion ? 0 : 0.00018
+    galaxyGroup.rotation.y = Math.sin(time * 0.06) * 0.06
     solarGroup.visible = sceneMix > 0.015
     solarGroup.scale.setScalar(solarScale * THREE.MathUtils.lerp(0.22, 1, sceneMix))
   }
